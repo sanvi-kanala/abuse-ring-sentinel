@@ -1,310 +1,173 @@
 🛡️ Abuse-Ring Sentinel
-
-Autonomous referral-bonus fraud detection that separates coordinated abuse rings from legitimate friends and family — and gates payouts before money moves.
-
-Built for the Razorpay AI Buildathon — Track 2: AI Risk Manager.
-
-Goal: stop referral-bonus leakage without punishing genuine users.
-
-Design principle: automate the repetitive risk decision, keep ambiguous cases explainable and auditable, and never move real money in this demo.
-
-Why this matters
-
-Referral programs are easy to abuse: one operator can create or control many identities, connect them through referrals, reuse devices/IPs/payment instruments, claim bonuses, and disappear.
-
-The difficult part is that the same signals can appear in legitimate situations. A real family or group of friends may sign up around the same event, share Wi-Fi, or even share a payment instrument.
-
-Abuse-Ring Sentinel therefore does not rely on a single rule. It combines:
-
-Referral-graph structure — connected components, density, depth and fan-out
-
-Identity reuse — device, IP and payment-instrument overlap
-
-Signup behavior — burstiness and signup span
-
-Post-signup behavior — transactions, transaction value, active days and engagement
-
-Razorpay payment signals — test-mode payment fingerprints where available
-
-Deterministic policy — converts risk into an autonomous payout action
-
-Groq explanations — explains the decision; it does not control the decision
-
-Architecture
-
-
-
-End-to-end flow
-
-Signup / referral / payment events
-              │
-              ▼
-     Referral graph construction
-              │
-              ▼
-       Feature engineering
-       ├── graph signals
-       ├── identity reuse
-       ├── timing signals
-       └── behavioral signals
-              │
-              ▼
-     Fraud-ring risk scoring
-              │
-       ┌──────┼─────────┐
-       ▼      ▼         ▼
-     LOW    MEDIUM     HIGH
-       │      │         │
-       ▼      ▼         ▼
-    APPROVE  HOLD     REJECT
-              │
-              ▼
-     Autonomous observation
-     for held claims
-              │
-       ┌──────┴───────┐
-       ▼              ▼
-    RELEASE         REJECT
-       │
-       ▼
- Razorpay payout gate
-
-Important: the claim-time decision is made using signals available at claim time. Future behavioral activity is not used to make the initial claim decision. Held claims can optionally enter a second-stage observation flow using synthetic historical post-signup activity in this prototype.
-
-What makes it autonomous?
-
-Most fraud dashboards only tell an operator “this looks risky.” Sentinel goes one step further.
-
+Autonomous referral-bonus fraud detection that separates coordinated abuse rings from genuine friends and family — before a payout is released.
+Built for the Razorpay AI Buildathon 2026 — Track 2: AI Risk Manager.
+> **Detect the ring. Protect the genuine user. Automate the payout decision.**
+---
+🚨 The problem
+Referral programs can leak money when one operator creates or controls many identities, connects them through referrals, reuses devices/IPs/payment instruments, claims bonuses, and disappears.
+The harder problem is avoiding false positives.
+A genuine family or group of friends can also:
+sign up around the same event
+share Wi-Fi or an IP
+occasionally share a payment instrument
+create a burst of referrals
+Abuse-Ring Sentinel combines multiple signals instead of blocking users on a single heuristic.
+---
+🧠 What the system does
+```text
+Referral / Signup / Payment Events
+                │
+                ▼
+       Referral Graph Analysis
+                │
+                ▼
+        Feature Engineering
+     ┌──────────┼───────────┐
+     │          │           │
+   Graph     Identity    Behavior
+  Signals     Reuse       Signals
+     └──────────┼───────────┘
+                ▼
+        Fraud-Ring Scoring
+                │
+        ┌───────┼────────┐
+        ▼       ▼        ▼
+       LOW    MEDIUM    HIGH
+        │       │        │
+        ▼       ▼        ▼
+     APPROVE   HOLD    REJECT
+                │
+                ▼
+      Autonomous Observation
+          for held claims
+                │
+          ┌─────┴─────┐
+          ▼           ▼
+       RELEASE      REJECT
+                │
+                ▼
+        Razorpay Payout Gate
+```
+---
+🏗️ Architecture
+![Abuse-Ring Sentinel architecture](docs/architecture.png)
+The architecture separates risk detection, decisioning, explanation, and payout control.
+Core components
+Component	Responsibility
+Referral Graph	Finds connected referral networks and candidate abuse clusters
+Feature Engineering	Builds graph, identity, timing and behavioral signals
+ML Risk Scoring	Scores the likelihood of coordinated abuse
+Claim Risk Engine	Makes an immediate claim-time decision
+Autonomous Observation	Re-evaluates held claims using post-signup behavior
+Decision Policy	Converts risk into approve / hold / reject
+Groq	Generates human-readable explanations
+Razorpay Integration	Payment fingerprints, webhooks and payout gating
+Audit Log	Records decisions, reasons, policy version and outcomes
+---
+🤖 Autonomous decision workflow
 Stage 1 — Claim-time decision
-
-When a user requests a referral bonus, the system immediately builds claim-time features and produces:
-
-Risk
-
-Decision
-
-Outcome
-
-< 0.30
-
-APPROVE_BONUS
-
-Release payout
-
-0.30 – < 0.70
-
-VERIFY_CLAIM
-
-Hold payout
-
-≥ 0.70
-
-REJECT_BONUS
-
-Do not release payout
-
+When a user requests a referral bonus, Sentinel evaluates only information available at claim time.
+Risk score	Decision	Action
+`< 0.30`	`APPROVE_BONUS`	Release
+`0.30 – < 0.70`	`VERIFY_CLAIM`	Hold
+`≥ 0.70`	`REJECT_BONUS`	Do not release
 The decision is deterministic and auditable.
-
 Stage 2 — Autonomous observation
-
-A held claim can be observed against post-signup activity.
-
-The observation engine considers:
-
+A held claim can enter a second stage that checks post-signup activity:
 transaction count
-
 transaction value
-
 active days
-
-evidence of genuine engagement
-
-It can convert a held claim into:
-
+genuine engagement
+The system can then resolve:
+```text
 HELD → APPROVE_BONUS
-
+```
 or
-
+```text
 HELD → REJECT_BONUS
-
-without requiring a person to manually perform the same checks.
-
-For the demo, this behavioral activity is replayed from the synthetic dataset. In production, the same interface can consume a merchant's transaction/event stream or webhook events.
-
-Key signals
-
-Signal
-
-Why it matters
-
-Referral connections
-
-Reveals coordinated referral structures
-
-Device reuse
-
-Many identities controlled from a small device set
-
+```
+without requiring an operator to manually repeat the same checks.
+Prototype note: the observation stage currently replays historical behavior from the synthetic dataset. A production implementation would consume a merchant transaction/event stream or webhook events.
+---
+🔍 Signals that matter
+Network signals
+referral connections
+connected-user count
+graph density
+referral depth
+fan-out patterns
+signup burstiness
+Identity signals
+device reuse
 IP reuse
-
-Detects shared infrastructure across accounts
-
-Payment-instrument reuse
-
-Strong evidence that apparently different users may share a financial source
-
-Connected-user count
-
-Measures the size of the local abuse network
-
-Multi-signal overlap
-
-Stronger than any single reused attribute
-
-Referral count
-
-Helps identify unusually aggressive referrers
-
-Transaction activity
-
-Helps distinguish bonus farming from genuine users
-
-Active days
-
-Genuine users tend to show continued activity
-
-Transaction value
-
-Helps identify claims with little/no genuine economic activity
-
-AI / ML roles
-
-The system deliberately separates decisioning from explanation.
-
-Machine learning
-
-The cluster-level detector uses a trained classifier over graph, identity and behavioral features.
-
-It is evaluated on a held-out synthetic test set rather than reporting training performance.
-
-Graph analysis
-
-NetworkX is used to construct the referral graph and identify connected components that become candidate clusters.
-
-Groq
-
-Groq is used for human-readable explanations of deterministic decisions.
-
-The LLM receives the computed decision and supporting facts and explains why the system reached that decision.
-
-The LLM is not the payout authority and cannot override the risk policy.
-
-Razorpay integration
-
-The repository includes a Razorpay Test Mode integration.
-
-Payments
-
-The Razorpay client can extract a payment fingerprint from supported payment methods, including:
-
-card identifiers
-
-UPI VPA information
-
-wallet/other method identifiers where available
-
-These fingerprints become identity-linking signals rather than being treated as standalone proof of fraud.
-
+payment-instrument reuse
+multi-signal overlap
+Behavioral signals
+transactions after signup
+transaction value
+active days
+zero-engagement rate
+The strongest evidence comes from multiple signals agreeing, rather than one signal being treated as proof of fraud.
+---
+💳 Razorpay integration
+The project includes a Razorpay Test Mode integration.
+Payment fingerprints
+Supported payment information can be converted into identity-linking signals, including card and UPI-related identifiers where available.
 Webhooks
-
-The FastAPI service exposes:
-
+```text
 POST /webhook/razorpay/payment
-
-The webhook path is observation-oriented: it records payment events and fingerprints for downstream risk analysis.
-
+```
+The webhook records payment events and fingerprints for downstream risk analysis.
 Payout gate
-
-Approved decisions can pass through the payout gate.
-
-For this buildathon demo:
-
+Approved decisions pass through the payout gate.
+For the buildathon demo:
+```text
 DRY_RUN_PAYOUTS=true
-
-so no real money moves.
-
-The integration is therefore safe to demonstrate using Razorpay Test Mode credentials.
-
-Evaluation
-
-The current benchmark uses a synthetically generated dataset containing fraud-ring clusters, family/friend clusters and organic users.
-
+```
+No real money moves.
+---
+🧩 AI / ML design
+Machine learning
+The cluster-level detector is trained on graph, identity and behavioral features and evaluated on a held-out test set.
+Graph analysis
+NetworkX identifies connected referral components and provides structural features for risk scoring.
+Groq
+Groq is used for explanation only.
+It receives the computed decision and supporting facts and produces a human-readable explanation.
+> **The LLM cannot override the risk policy or authorize a payout.**
+---
+📊 Evaluation
+The benchmark is synthetic and contains fraud-ring, family/friend and organic clusters.
 Held-out test results
-
-Metric
-
-Result
-
-Precision
-
-100%
-
-Recall
-
-95%
-
-F1
-
-97.4%
-
-ROC-AUC
-
-1.00
-
-False positives
-
-0
-
-False negatives
-
-2
-
-Net value created
-
-≈ ₹106,832
-
-These numbers are intentionally presented as synthetic benchmark results, not production claims.
-
-The test set contains difficult variants including stealthier fraud rings and legitimate bursty family/friend behavior.
-
+Metric	Result
+Precision	100%
+Recall	95%
+F1	97.4%
+ROC-AUC	1.00
+False positives	0
+False negatives	2
+Net value created	≈ ₹106,832
+These are synthetic benchmark results, not production performance claims.
+The generator includes difficult cases such as stealthier fraud rings and legitimate bursty family/friend behavior.
 False-positive cost
-
-False positives matter because wrongly holding a genuine user's reward creates:
-
-manual-review cost
-
+False positives are treated as a real business cost because wrongly holding a genuine reward can create:
+manual-review work
 support overhead
-
 user friction
-
 goodwill/reputation risk
-
-The pipeline therefore tracks false-positive cost separately rather than treating every error as equivalent.
-
-Demo scenarios
-
+The evaluation therefore tracks false-positive cost instead of treating all errors as equivalent.
+---
+🎬 Demo scenarios
 🟢 Genuine user
-
+```text
 LOW RISK
    ↓
 APPROVE_BONUS
    ↓
 RELEASED_SIMULATED
-
-No suspicious network overlap → bonus can be released.
-
+```
 🟠 Ambiguous friend/family case
-
+```text
 MEDIUM RISK
    ↓
 VERIFY_CLAIM
@@ -314,98 +177,100 @@ HELD
 AUTONOMOUS OBSERVATION
    ↓
 APPROVED / REJECTED
-
-The system avoids immediately penalizing a user when the evidence is ambiguous.
-
+```
 🔴 Coordinated abuse
-
+```text
 HIGH RISK
    ↓
 REJECT_BONUS
    ↓
 NOT_RELEASED
-
-Multiple overlapping identity signals and a connected referral network can push the claim into the high-risk band.
-
-API
-
-Start the backend with:
-
-uvicorn src.api.main:app --reload --port 8000
-
-Core endpoints
-
-Endpoint
-
-Purpose
-
-GET /health
-
-Service and policy health
-
-POST /claim-bonus
-
-Evaluate a bonus claim
-
-GET /claim-decisions
-
-Inspect claim decisions
-
-POST /claim-observation/{claim_id}/resolve
-
-Run autonomous observation on a held claim
-
-POST /score-cluster
-
-Score a referral cluster
-
-GET /clusters/{cluster_id}
-
-Inspect a cluster
-
-POST /webhook/razorpay/payment
-
-Receive Razorpay payment events
-
-GET /report/summary
-
-Read evaluation/report summary
-
-Interactive API documentation is available through FastAPI at:
-
-http://localhost:8000/docs
-
-Dashboard
-
+```
+---
+🖥️ Dashboard
 The Streamlit dashboard provides:
-
-cluster risk overview
-
-fraud-ring/network visualization
-
+fraud-ring and cluster overview
+network visualization
 risk scores and contributing signals
-
 claim-level decisions
-
 autonomous observation for held claims
-
 payout-gate status
-
-Groq-generated explanations
-
-audit-oriented decision history
-
-Run:
-
+Groq explanations
+decision history / audit information
+Run it with:
+```bash
 streamlit run dashboard.py
-
-Project structure
-
+```
+---
+⚡ Quick start
+1. Clone
+```bash
+git clone https://github.com/sanvi-kanala/abuse-ring-sentinel.git
+cd abuse-ring-sentinel
+```
+2. Create an environment
+Windows PowerShell
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+macOS / Linux
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+3. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+4. Configure environment variables
+```text
+Copy .env.example → .env
+```
+Add test-mode credentials if you want to exercise the Razorpay integration.
+Never commit `.env`.
+5. Run the pipeline
+```bash
+python run_pipeline.py
+```
+This generates the synthetic dataset, builds features, trains/evaluates the model and produces the generated reports.
+6. Start the API
+```bash
+uvicorn src.api.main:app --reload --port 8000
+```
+API docs:
+```text
+http://localhost:8000/docs
+```
+7. Start the dashboard
+```bash
+streamlit run dashboard.py
+```
+8. Run tests
+```bash
+python -m pytest tests/ -v
+```
+---
+🔌 API
+Method	Endpoint	Purpose
+`GET`	`/health`	Service health
+`POST`	`/claim-bonus`	Evaluate a bonus claim
+`GET`	`/claim-decisions`	View claim decisions
+`POST`	`/claim-observation/{claim_id}/resolve`	Resolve a held claim through observation
+`POST`	`/score-cluster`	Score a referral cluster
+`GET`	`/clusters/{cluster_id}`	Inspect a cluster
+`POST`	`/webhook/razorpay/payment`	Receive payment events
+`GET`	`/report/summary`	Read evaluation summary
+---
+📁 Project structure
+```text
 abuse-ring-sentinel/
 ├── dashboard.py
 ├── run_pipeline.py
 ├── requirements.txt
 ├── .env.example
+├── docs/
+│   └── architecture.png
 ├── reference/
 │   └── disposable_domains.txt
 ├── src/
@@ -429,154 +294,40 @@ abuse-ring-sentinel/
 │       ├── payout_gate.py
 │       └── run_autonomous_demo.py
 └── tests/
-
+```
 Generated datasets and reports are intentionally excluded from Git.
-
-Quick start
-
-1. Clone
-
-git clone https://github.com/<your-username>/abuse-ring-sentinel.git
-cd abuse-ring-sentinel
-
-2. Create an environment
-
-Windows PowerShell
-
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-
-macOS / Linux
-
-python3 -m venv .venv
-source .venv/bin/activate
-
-3. Install dependencies
-
-pip install -r requirements.txt
-
-4. Configure environment variables
-
-copy .env.example .env
-
-Then add your test-mode credentials if you want to exercise the Razorpay integration.
-
-Never commit .env.
-
-5. Run the pipeline
-
-python run_pipeline.py
-
-This generates the synthetic data, engineers features, trains/evaluates the model and produces the reports used by the dashboard.
-
-6. Start the API
-
-uvicorn src.api.main:app --reload --port 8000
-
-7. Start the dashboard
-
-In another terminal:
-
-streamlit run dashboard.py
-
-8. Run tests
-
-python -m pytest tests/ -v
-
-Auditability
-
-Every decision is designed to be inspectable.
-
-A claim decision records:
-
-claim/user identifier
-
-risk score
-
-decision
-
-supporting signals
-
-policy version
-
-timestamp
-
-payout outcome
-
-observation outcome where applicable
-
-This makes the system easier to debug, evaluate and explain to a risk/operations team.
-
-Defense-only scope
-
-This project is intentionally built as a defensive risk-management system.
-
+---
+🛡️ Defense-only
+Abuse-Ring Sentinel is designed strictly for fraud prevention.
 It does not:
-
 generate fraud techniques
-
 help bypass fraud detection
-
 attack external systems
-
 retaliate against users
-
 automatically ban accounts
-
 move real money in the demo
-
-Its purpose is to reduce fraudulent bonus payouts while minimizing unnecessary friction for legitimate users.
-
-Limitations & production path
-
-This is a buildathon prototype, not a production fraud platform.
-
-Current limitations
-
-Evaluation data is synthetic.
-
-Real-world fraud patterns will be noisier and more adaptive.
-
-Payment-instrument reuse is powerful but not universally available.
-
-Production thresholds require calibration against labeled incidents.
-
-The autonomous observation stage currently replays synthetic historical behavior.
-
-Production evolution
-
-A production implementation could add:
-
+The goal is simple:
+> **Reduce fraudulent bonus payouts while minimizing unnecessary friction for legitimate users.**
+---
+🔭 Production path
+The buildathon prototype can evolve toward:
 real-time signup/referral/payment event ingestion
-
-streaming graph updates
-
-stronger entity-resolution signals
-
-online threshold calibration
-
-merchant-specific fraud policies
-
+streaming referral graphs
+stronger entity resolution
+merchant-specific policies
+threshold calibration from labeled incidents
 human-review feedback loops
-
-model monitoring and drift detection
-
-cloud deployment and persistent audit storage
-
-Why this approach?
-
-The objective is not simply to predict “fraud / not fraud.”
-
-The useful question for a payout system is:
-
-“Can we safely release this bonus right now, or should the system take another action?”
-
-Abuse-Ring Sentinel turns that question into an autonomous, explainable workflow:
-
-DETECT → SCORE → DECIDE → OBSERVE IF NEEDED → GATE PAYOUT
-
-That is the core idea behind the project: remove repetitive risk-review work while keeping decisions measurable, explainable and safe.
-
-License
-
+model drift monitoring
+persistent audit storage
+cloud deployment
+---
+⚠️ Limitations
+This is a buildathon prototype.
+The evaluation dataset is synthetic.
+Real production traffic will be noisier.
+Thresholds require calibration against real labeled incidents.
+Payment-instrument reuse is not universally available.
+Autonomous observation currently replays synthetic historical activity.
+---
+📜 License
 MIT
