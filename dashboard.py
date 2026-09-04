@@ -1,0 +1,2276 @@
+
+import json
+import os
+from datetime import datetime
+import urllib.error
+import urllib.request
+import urllib.parse
+
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import networkx as nx
+import streamlit.components.v1 as components
+import streamlit as st
+from dotenv import load_dotenv
+
+try:
+    from groq import Groq
+except ImportError:
+    Groq = None
+
+load_dotenv()
+
+
+# ============================================================
+# CONFIG
+# ============================================================
+
+st.set_page_config(
+    page_title="Abuse-Ring Sentinel",
+    page_icon="🛡️",
+    layout="wide",
+)
+
+# ============================================================
+# MODERN TWO-PANEL UI
+# ============================================================
+
+st.markdown("""
+<style>
+/* Keep the two major workflows visually separate.
+   Streamlit exposes the container key as a stable CSS class. */
+.st-key-live_claim_panel {
+    background: linear-gradient(180deg, #eef8ff 0%, #f7fbff 100%);
+    border: 1px solid #b9ddff;
+    border-radius: 18px;
+    padding: 1.15rem 1.15rem 1.35rem 1.15rem;
+    box-shadow: 0 6px 20px rgba(30, 100, 180, 0.08);
+    min-height: 100%;
+}
+
+.st-key-cluster_analysis_panel {
+    background: linear-gradient(180deg, #f6f0ff 0%, #fbf9ff 100%);
+    border: 1px solid #d9c4ff;
+    border-radius: 18px;
+    padding: 1.15rem 1.15rem 1.35rem 1.15rem;
+    box-shadow: 0 6px 20px rgba(110, 70, 180, 0.08);
+    min-height: 100%;
+}
+
+.st-key-live_claim_panel h2,
+.st-key-cluster_analysis_panel h2 {
+    margin-top: 0;
+}
+
+.st-key-live_claim_panel [data-testid="stMetric"],
+.st-key-cluster_analysis_panel [data-testid="stMetric"] {
+    background: rgba(255,255,255,0.72);
+    border-radius: 12px;
+    padding: 0.55rem;
+}
+
+/* Larger top-level workspace navigation */
+[data-testid="stRadio"] > div[role="radiogroup"] {
+    gap: 14px !important;
+    width: 100%;
+}
+
+[data-testid="stRadio"] > div[role="radiogroup"] > label {
+    flex: 1 1 0 !important;
+    min-height: 82px !important;
+    padding: 18px 22px !important;
+    border: 1px solid #d7dce5 !important;
+    border-radius: 16px !important;
+    background: #ffffff !important;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.06) !important;
+    transition: all 0.15s ease-in-out;
+}
+
+[data-testid="stRadio"] > div[role="radiogroup"] > label:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.10) !important;
+    border-color: #aeb8c8 !important;
+}
+
+[data-testid="stRadio"] > div[role="radiogroup"] > label p {
+    font-size: 1.12rem !important;
+    font-weight: 750 !important;
+    line-height: 1.3 !important;
+    margin: 0 !important;
+}
+
+[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) {
+    border: 2px solid #2563eb !important;
+    background: linear-gradient(135deg, #eff6ff, #ffffff) !important;
+    box-shadow: 0 7px 20px rgba(37, 99, 235, 0.14) !important;
+}
+
+[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) p {
+    color: #1d4ed8 !important;
+}
+
+@media (max-width: 900px) {
+    [data-testid="stRadio"] > div[role="radiogroup"] {
+        flex-direction: column !important;
+    }
+    [data-testid="stRadio"] > div[role="radiogroup"] > label {
+        width: 100% !important;
+    }
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+
+FEATURES_PATH = "data/cluster_features.csv"
+SCORES_PATH = "reports/cluster_risk_scores.csv"
+METRICS_PATH = "reports/metrics.json"
+LEDGER_PATH = "reports/bonus_ledger_demo.jsonl"
+AUDIT_PATH = "reports/audit_log.jsonl"
+USERS_PATH = "data/users.csv"
+REFERRALS_PATH = "data/referrals.csv"
+PAYMENTS_PATH = "data/payments.csv"
+WEBHOOK_EVENTS_PATH = "reports/webhook_events.jsonl"
+MAPPING_PATH = "data/razorpay_cluster_mapping.json"
+
+
+# ============================================================
+# HELPERS
+# ============================================================
+
+def load_json(path):
+
+    if not os.path.exists(path):
+        return {}
+
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    except Exception:
+        return {}
+
+
+def load_jsonl(path):
+
+    if not os.path.exists(path):
+        return []
+
+    records = []
+
+    try:
+
+        with open(path, "r", encoding="utf-8") as f:
+
+            for line in f:
+
+                line = line.strip()
+
+                if not line:
+                    continue
+
+                try:
+                    records.append(json.loads(line))
+                except Exception:
+                    continue
+
+    except Exception:
+        pass
+
+    return records
+
+
+@st.cache_data(ttl=5)
+def load_features():
+
+    if not os.path.exists(FEATURES_PATH):
+        return pd.DataFrame()
+
+    return pd.read_csv(FEATURES_PATH)
+
+
+@st.cache_data(ttl=5)
+def load_scores():
+
+    if not os.path.exists(SCORES_PATH):
+        return pd.DataFrame()
+
+    return pd.read_csv(SCORES_PATH)
+
+
+@st.cache_data(ttl=5)
+def load_csv_optional(path):
+    if not os.path.exists(path):
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(path)
+    except Exception:
+        return pd.DataFrame()
+
+
+def build_referral_graph(users_df):
+    """Recreate the same weakly-connected referral components used by the pipeline."""
+    if users_df.empty or "user_id" not in users_df.columns:
+        return nx.DiGraph(), pd.Series(dtype=object)
+
+    g = nx.DiGraph()
+    g.add_nodes_from(users_df["user_id"].astype(str).tolist())
+
+    if "referred_by" in users_df.columns:
+        for _, r in users_df.iterrows():
+            parent = r.get("referred_by")
+            child = r.get("user_id")
+            if pd.notna(parent) and str(parent).strip() and pd.notna(child):
+                g.add_edge(str(parent), str(child))
+
+    comp_map = {}
+    for i, component in enumerate(nx.connected_components(g.to_undirected())):
+        for node in component:
+            comp_map[node] = f"comp_{i}"
+
+    return g, pd.Series(comp_map, name="graph_cluster_id")
+
+
+
+def complete_referral_graph_figure(users_df, payments_df, scores_df, graph):
+    """Show every user and referral edge, grouped visually by dataset cluster_type."""
+    if users_df.empty or graph.number_of_nodes() == 0:
+        return None
+
+    import math
+
+    clean = users_df.copy()
+    clean["user_id"] = clean["user_id"].astype(str)
+    if "cluster_id" in clean.columns:
+        clean["cluster_id"] = clean["cluster_id"].astype(str)
+    lookup = clean.set_index("user_id")
+
+    # Fast deterministic placement: one compact neighborhood per cluster.
+    clusters = {}
+    for uid in graph.nodes:
+        cluster = str(lookup.loc[uid].get("cluster_id", "unknown")) if uid in lookup.index else "unknown"
+        clusters.setdefault(cluster, []).append(uid)
+
+    names = list(clusters)
+    cols = max(1, int(math.ceil(math.sqrt(max(len(names), 1)))))
+    spacing = 12.0
+    pos = {}
+    for i, cluster in enumerate(names):
+        cx = (i % cols) * spacing
+        cy = (i // cols) * spacing
+        members = clusters[cluster]
+        n = len(members)
+        radius = 0.8 + min(3.0, 0.18 * math.sqrt(n))
+        if n == 1:
+            pos[members[0]] = (cx, cy)
+        else:
+            for j, uid in enumerate(members):
+                angle = 2 * math.pi * j / n
+                pos[uid] = (cx + radius * math.cos(angle), cy + radius * math.sin(angle))
+
+    # Attach payment evidence to nodes.
+    payment_count = {}
+    payment_value = {}
+    if not payments_df.empty and "user_id" in payments_df.columns:
+        p = payments_df.copy()
+        p["user_id"] = p["user_id"].astype(str)
+        if "amount" in p.columns:
+            p["amount"] = pd.to_numeric(p["amount"], errors="coerce").fillna(0)
+        grp = p.groupby("user_id")
+        payment_count = grp.size().to_dict()
+        if "amount" in p.columns:
+            payment_value = grp["amount"].sum().to_dict()
+
+    # Attach model risk to nodes through cluster_id.
+    risk_lookup = {}
+    if not scores_df.empty and "cluster_id" in scores_df.columns:
+        for _, r in scores_df.iterrows():
+            risk_lookup[str(r["cluster_id"])] = float(r.get("risk_score", 0))
+
+    specs = {
+        "FRAUD_RING": ("🚨 Fraudsters", 10, "#E53935"),
+        "FAMILY_FRIEND": ("👥 Friends / Family", 9, "#43A047"),
+        "ORGANIC_SINGLE": ("👤 Organic users", 6, "#90A4AE"),
+    }
+
+    traces = []
+    for group, (label, size, color) in specs.items():
+        xs, ys, hovers = [], [], []
+        subset = clean[clean.get("cluster_type", pd.Series(index=clean.index, dtype=object)).astype(str) == group]
+        for _, r in subset.iterrows():
+            uid = str(r["user_id"])
+            if uid not in pos:
+                continue
+            x, y = pos[uid]
+            cluster = str(r.get("cluster_id", "unknown"))
+            risk = risk_lookup.get(cluster)
+            risk_text = f"{risk:.3f}" if risk is not None else "not scored"
+            bonus = float(r.get("bonus_amount_claimed", 0) or 0)
+            hovers.append(
+                f"User: {uid}<br>Group: {group}<br>Cluster: {cluster}<br>"
+                f"Risk score: {risk_text}<br>Referrer: {r.get('referred_by', '-')}<br>"
+                f"Payments: {int(payment_count.get(uid, 0))}<br>"
+                f"Payment value: ₹{float(payment_value.get(uid, 0)):,.2f}<br>"
+                f"Device: {r.get('device_id', '-')}<br>IP: {r.get('signup_ip', '-')}<br>"
+                f"Instrument: {r.get('payment_instrument_id', '-')}<br>Bonus: ₹{bonus:,.2f}"
+            )
+            xs.append(x); ys.append(y)
+        if xs:
+            traces.append(go.Scattergl(
+                x=xs, y=ys, mode="markers", name=label,
+                hovertext=hovers, hoverinfo="text",
+                marker=dict(size=size, color=color, line=dict(width=0.5)),
+            ))
+
+    edge_specs = {
+        "FRAUD_RING": ("🚨 Fraud referral edges", "#E53935"),
+        "FAMILY_FRIEND": ("👥 Friend/family referral edges", "#43A047"),
+        "OTHER": ("Referral edges", "#90A4AE"),
+    }
+    edge_data = {k: ([], []) for k in edge_specs}
+    for source, target in graph.edges():
+        if source not in pos or target not in pos:
+            continue
+        group = str(lookup.loc[target].get("cluster_type", "OTHER")) if target in lookup.index else "OTHER"
+        key = group if group in edge_data else "OTHER"
+        ex, ey = edge_data[key]
+        x0, y0 = pos[source]; x1, y1 = pos[target]
+        ex += [x0, x1, None]; ey += [y0, y1, None]
+    for key, (label, color) in edge_specs.items():
+        ex, ey = edge_data[key]
+        if ex:
+            traces.insert(0, go.Scattergl(
+                x=ex, y=ey, mode="lines", name=label,
+                hoverinfo="none", line=dict(width=0.8, color=color), opacity=0.30,
+            ))
+
+    fig = go.Figure(traces)
+    fig.update_layout(
+        title="Complete referral network — all users and referral edges",
+        height=760,
+        margin=dict(l=10, r=10, t=70, b=10),
+        legend=dict(orientation="h", yanchor="bottom", y=1.01, xanchor="left", x=0),
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        plot_bgcolor="white", paper_bgcolor="white",
+    )
+    return fig
+
+def referral_graph_figure(users_df, graph, selected_cluster):
+    """Interactive Plotly network for one actual referral component."""
+    if users_df.empty or graph is None or not selected_cluster:
+        return None
+
+    _, comp_map = build_referral_graph(users_df)
+    member_ids = [
+        user_id
+        for user_id, comp_id in comp_map.items()
+        if comp_id == selected_cluster
+    ]
+
+    if not member_ids:
+        return None
+
+    sub = graph.subgraph(member_ids).copy()
+
+    # Tree-friendly layout. spring_layout keeps small components readable.
+    pos = nx.spring_layout(sub, seed=42, k=1.6)
+
+    edge_x, edge_y = [], []
+    for source, target in sub.edges():
+        x0, y0 = pos[source]
+        x1, y1 = pos[target]
+        edge_x += [x0, x1, None]
+        edge_y += [y0, y1, None]
+
+    edge_trace = go.Scatter(
+        x=edge_x,
+        y=edge_y,
+        mode="lines",
+        line=dict(width=1.5),
+        hoverinfo="none",
+    )
+
+    user_lookup = users_df.copy()
+    user_lookup["user_id"] = user_lookup["user_id"].astype(str)
+    user_lookup = user_lookup.set_index("user_id")
+
+    node_x, node_y, labels, hover = [], [], [], []
+    for node in sub.nodes():
+        x, y = pos[node]
+        row = user_lookup.loc[node] if node in user_lookup.index else {}
+        parent = row.get("referred_by", "-") if isinstance(row, pd.Series) else "-"
+        bonus = row.get("bonus_amount_claimed", 0) if isinstance(row, pd.Series) else 0
+        device = row.get("device_id", "-") if isinstance(row, pd.Series) else "-"
+        instrument = row.get("payment_instrument_id", "-") if isinstance(row, pd.Series) else "-"
+
+        node_x.append(x)
+        node_y.append(y)
+        labels.append(node[-6:])
+        hover.append(
+            f"User: {node}<br>Referred by: {parent}<br>"
+            f"Bonus claimed: ₹{float(bonus):,.2f}<br>"
+            f"Device: {device}<br>Payment instrument: {instrument}"
+        )
+
+    node_trace = go.Scatter(
+        x=node_x,
+        y=node_y,
+        mode="markers+text",
+        text=labels,
+        textposition="bottom center",
+        hovertext=hover,
+        hoverinfo="text",
+        marker=dict(size=22, line=dict(width=1)),
+    )
+
+    fig = go.Figure(data=[edge_trace, node_trace])
+    fig.update_layout(
+        title=f"Actual referral graph — {selected_cluster} ({len(member_ids)} users)",
+        showlegend=False,
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        height=480,
+        margin=dict(l=10, r=10, t=60, b=10),
+    )
+    return fig
+
+
+def money(value):
+
+    try:
+        return f"₹{float(value):,.2f}"
+    except Exception:
+        return "₹0.00"
+
+
+def risk_label(score):
+
+    score = float(score)
+
+    if score < 0.30:
+        return "RELEASE"
+
+    if score < 0.70:
+        return "VERIFY"
+
+    return "BLOCK"
+
+
+def risk_color(score):
+
+    score = float(score)
+
+    if score < 0.30:
+        return "🟢"
+
+    if score < 0.70:
+        return "🟡"
+
+    return "🔴"
+
+
+# ============================================================
+# GROQ EXPLANATION LAYER
+# ============================================================
+
+GROQ_MODEL = "openai/gpt-oss-20b"
+
+
+def generate_groq_explanation(row, initial_action, final_action, checks):
+    """Generate a grounded operator explanation with Groq.
+
+    IMPORTANT: Groq is explanation-only. The ML score and deterministic
+    policy already decided the action. For high/low-risk clusters there
+    are no verification results, so the prompt explicitly forbids Groq
+    from inventing them.
+    """
+    if Groq is None:
+        return "Groq SDK is not installed. Run: pip install groq"
+
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        return "GROQ_API_KEY is not configured in .env."
+
+    def num(name, digits=3):
+        value = row.get(name, None)
+        try:
+            value = float(value)
+            return round(value, digits)
+        except (TypeError, ValueError):
+            return None
+
+    # Build ONLY facts that actually exist in the selected cluster row.
+    # Do not pass empty verification checks as if they were evidence.
+    facts = {
+        "cluster_id": str(row.get("cluster_id", "unknown")),
+        "risk_score": num("risk_score", 4),
+        "model_action": initial_action,
+        "final_policy_action": final_action,
+        "cluster_size": num("cluster_size", 2),
+        "referral_edges": num("n_referral_edges", 2),
+        "device_reuse_ratio": num("device_reuse_ratio", 3),
+        "ip_reuse_ratio": num("ip_reuse_ratio", 3),
+        "instrument_reuse_ratio": num("instrument_reuse_ratio", 3),
+    }
+
+    # Add behavioral/transaction evidence only when it is present.
+    optional_fields = [
+        "avg_txn_post_signup",
+        "avg_active_days_post_signup",
+        "avg_txn_value_post_signup",
+        "pct_zero_engagement",
+        "total_bonus_claimed",
+    ]
+    for field in optional_fields:
+        value = num(field, 3)
+        if value is not None:
+            facts[field] = value
+
+    verification_required = initial_action == "HOLD_FOR_VERIFICATION"
+    verification_facts = {}
+    if verification_required and checks:
+        verification_facts = checks
+
+    prompt = f"""
+You are the AI explanation layer for a referral-bonus fraud system.
+
+The ML model and deterministic policy have ALREADY made the decision.
+You are NOT allowed to change, question, or recommend a different action.
+Your only job is to explain the decision using the supplied facts.
+
+CRITICAL GROUNDING RULES:
+1. Use ONLY facts explicitly present below.
+2. NEVER invent a verification result, transaction value, activity score,
+   threshold, user behavior, or other number.
+3. Verification checks exist ONLY when verification_required is true and
+   verification_facts contains entries. Otherwise say nothing about
+   verification checks.
+4. Do not call this a "transaction". Explain it as a referral cluster and
+   bonus decision.
+5. Do not claim real money moved. This dashboard is in test/demo mode.
+6. The final action MUST remain exactly: {final_action}.
+
+Return exactly this format:
+
+DECISION:
+One sentence stating the final action for the referral bonus.
+
+WHY:
+- Exactly 2 or 3 evidence-based bullet points using only the supplied facts.
+
+NEXT ACTION:
+One sentence describing the operational action implied by the final policy.
+
+SUPPLIED FACTS:
+{json.dumps(facts, indent=2, default=str)}
+
+verification_required: {verification_required}
+verification_facts:
+{json.dumps(verification_facts, indent=2, default=str)}
+"""
+
+    try:
+        client = Groq(api_key=api_key)
+        response = client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a grounded fraud-risk explanation assistant. "
+                        "Never invent facts. Never invent missing verification "
+                        "checks. The supplied final action is authoritative."
+                    ),
+                },
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.0,
+            max_completion_tokens=1200,
+            reasoning_effort="low",
+            include_reasoning=False,
+            stream=False,
+        )
+
+        message = response.choices[0].message
+        content = getattr(message, "content", None)
+
+        # GPT-OSS is a reasoning model. Explicitly disabling returned reasoning
+        # and using low reasoning effort keeps the completion budget available
+        # for the actual analyst explanation.
+        if not content:
+            # Defensive compatibility for SDK response variants.
+            content = getattr(message, "output_text", None)
+
+        if not content or not str(content).strip():
+            # Never show an empty AI panel. Use the grounded fallback below.
+            content = None
+
+        explanation = content.strip() if content else None
+
+        # A lightweight grounding guard. If Groq nevertheless introduces
+        # verification claims when no verification was performed, discard
+        # that generated text and show a deterministic explanation instead.
+        if not verification_required:
+            forbidden_markers = [
+                "verification check",
+                "verification checks",
+                "threshold 1.0",
+                "threshold 2.0",
+                "threshold 100",
+                "post-signup activity score",
+                "sustained activity score",
+                "meaningful transaction value",
+            ]
+            lower = explanation.lower()
+            if any(marker in lower for marker in forbidden_markers):
+                explanation = None
+
+        if explanation:
+            return explanation
+
+        # Grounded fallback: still show the AI layer's safe result if the
+        # model tried to introduce unsupported facts.
+        cluster_id = facts["cluster_id"]
+        risk = facts["risk_score"]
+        cluster_size = facts["cluster_size"]
+        referral_edges = facts["referral_edges"]
+        instrument = facts["instrument_reuse_ratio"]
+        device = facts["device_reuse_ratio"]
+        ip = facts["ip_reuse_ratio"]
+
+        action_word = {
+            "RELEASE": "RELEASED",
+            "HOLD_FOR_VERIFICATION": "HELD FOR VERIFICATION",
+            "BLOCK_BONUS": "BLOCKED",
+        }.get(final_action, final_action)
+
+        if final_action == "RELEASE":
+            next_action = "Release the approved referral bonus; this dashboard is in test mode."
+        elif final_action == "HOLD_FOR_VERIFICATION":
+            next_action = "Keep the bonus on hold until the automated verification requirements are satisfied."
+        else:
+            next_action = "Keep the referral bonus blocked; no payout should be released."
+
+        return (
+            f"DECISION:\n"
+            f"The referral bonus for cluster {cluster_id} is {action_word}.\n\n"
+            f"WHY:\n"
+            f"- The model assigned a risk score of {risk:.3f}.\n"
+            f"- The cluster contains {cluster_size:.0f} users and "
+            f"{referral_edges:.0f} referral edges.\n"
+            f"- Reuse signals are present across payment instruments "
+            f"({instrument:.1%}), devices ({device:.1%}), and IPs ({ip:.1%}).\n\n"
+            f"NEXT ACTION:\n"
+            f"{next_action}"
+        )
+
+    except Exception as exc:
+        return (
+            f"Groq explanation unavailable: "
+            f"{type(exc).__name__}: {exc}"
+        )
+
+
+
+def generate_claim_groq_explanation(result):
+    """Explain one live bonus-claim decision using only returned claim evidence.
+
+    Groq is explanation-only: the backend's deterministic claim decision is
+    authoritative and cannot be changed by the model.
+    """
+    if Groq is None:
+        return "Groq SDK is not installed. Run: pip install groq"
+
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        return "GROQ_API_KEY is not configured in .env."
+
+    risk = result.get("risk_score", 0)
+    level = result.get("risk_level", "UNKNOWN")
+    action = result.get("action", "UNKNOWN")
+    decision = result.get("decision", "UNKNOWN")
+    bonus_amount = result.get("bonus_amount_inr", 0)
+    user_id = result.get("user_id", "")
+    referrer_id = result.get("referrer_id", "")
+    reasons = result.get("reasons", []) or []
+    signals = result.get("signals", {}) or {}
+
+    facts = {
+        "user_id": str(user_id),
+        "referrer_id": str(referrer_id),
+        "bonus_amount_inr": float(bonus_amount or 0),
+        "risk_score": float(risk or 0),
+        "risk_level": str(level),
+        "claim_action": str(action),
+        "final_decision": str(decision),
+        "signals": signals,
+        "reasons": reasons,
+        "dry_run": bool(result.get("dry_run", True)),
+        "money_moved": bool(result.get("money_moved", False)),
+    }
+
+    prompt = f"""
+You are the AI explanation layer for Abuse-Ring Sentinel, an autonomous
+referral-bonus fraud protection system.
+
+The deterministic claim-risk engine has ALREADY made the decision.
+You MUST NOT change, question, override, or recommend a different decision.
+Your only job is to explain the exact decision to an operator.
+
+GROUNDING RULES:
+1. Use ONLY the supplied facts.
+2. Do not invent user behavior, transaction history, verification results,
+   thresholds, locations, identities, or other facts.
+3. These are CLAIM-TIME signals. Do not mention future behavior unless it is
+   explicitly present in the supplied facts.
+4. Explain this as a referral-bonus claim, not as a payment transaction.
+5. Never claim real money moved. This is a test/demo environment.
+6. The final decision is authoritative and MUST remain exactly:
+   {decision}
+
+Return exactly:
+
+DECISION:
+One concise sentence stating the final decision for the referral bonus.
+
+WHY:
+- Exactly 2 or 3 evidence-based bullet points using the supplied signals.
+- Make the strongest coordinated-abuse evidence clear when present.
+- If the evidence is weak, say that the claim has no significant coordinated-abuse
+  signals rather than inventing reassurance.
+
+NEXT ACTION:
+One sentence describing the operational action implied by the existing decision.
+
+SUPPLIED FACTS:
+{json.dumps(facts, indent=2, default=str)}
+"""
+
+    try:
+        client = Groq(api_key=api_key)
+        response = client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a grounded fraud-risk explanation assistant. "
+                        "The supplied claim decision is authoritative. "
+                        "Never invent facts and never change the decision."
+                    ),
+                },
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.0,
+            max_completion_tokens=900,
+            reasoning_effort="low",
+            include_reasoning=False,
+            stream=False,
+        )
+
+        message = response.choices[0].message
+        content = getattr(message, "content", None)
+        if not content:
+            content = getattr(message, "output_text", None)
+
+        if content and str(content).strip():
+            explanation = str(content).strip()
+
+            # Basic grounding guard for the live claim path.
+            forbidden = [
+                "post-signup activity",
+                "transaction history",
+                "verification check",
+                "verification checks",
+                "future behavior",
+            ]
+
+            # The live claim path is autonomous. A rejected claim must never
+            # be described as being sent to manual review.
+            if decision == "REJECTED":
+                forbidden += [
+                    "manual review",
+                    "flag the claim for review",
+                    "send for review",
+                ]
+
+            if not any(x in explanation.lower() for x in forbidden):
+                return explanation
+
+        return _claim_groq_fallback(facts)
+
+    except Exception as exc:
+        return (
+            f"Groq explanation unavailable: {type(exc).__name__}: {exc}"
+        )
+
+
+def _claim_groq_fallback(facts):
+    """Deterministic, grounded fallback for the live claim explanation."""
+    decision = facts["final_decision"]
+    risk = facts["risk_score"]
+    signals = facts["signals"]
+    reasons = facts["reasons"]
+
+    action_text = {
+        "APPROVED": "APPROVED",
+        "VERIFICATION_REQUIRED": "HELD FOR VERIFICATION",
+        "REJECTED": "REJECTED",
+    }.get(decision, decision)
+
+    evidence = reasons[:3]
+    if not evidence:
+        evidence = ["No significant coordinated-abuse signals were detected."]
+
+    bullets = "\n".join(f"- {item}" for item in evidence)
+
+    if decision == "APPROVED":
+        next_action = (
+            "Release the approved referral bonus; the demo is configured "
+            "so that no real money moves."
+        )
+    elif decision == "VERIFICATION_REQUIRED":
+        next_action = (
+            "Keep the bonus protected pending the existing verification workflow."
+        )
+    else:
+        next_action = "Keep the referral bonus blocked; no payout should be released."
+
+    return (
+        f"DECISION:\n"
+        f"The referral bonus is {action_text} at a risk score of {risk:.2f}.\n\n"
+        f"WHY:\n"
+        f"{bullets}\n\n"
+        f"NEXT ACTION:\n"
+        f"{next_action}"
+    )
+
+
+# ============================================================
+# LIVE CLAIM API
+# ============================================================
+
+SENTINEL_API_URL = os.getenv(
+    "SENTINEL_API_URL",
+    "http://127.0.0.1:8000",
+).rstrip("/")
+
+
+def submit_bonus_claim(user_id, referrer_id, bonus_amount, payment_id=""):
+    """Call the real local FastAPI claim endpoint."""
+    payload = {
+        "user_id": str(user_id),
+        "bonus_amount": float(bonus_amount),
+    }
+
+    if referrer_id:
+        payload["referrer_id"] = str(referrer_id)
+
+    if payment_id:
+        payload["payment_id"] = str(payment_id)
+
+    body = json.dumps(payload).encode("utf-8")
+    request = urllib.request.Request(
+        f"{SENTINEL_API_URL}/claim-bonus",
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            return normalize_claim_result(json.loads(response.read().decode("utf-8"))), None
+    except urllib.error.HTTPError as exc:
+        try:
+            detail = exc.read().decode("utf-8")
+        except Exception:
+            detail = str(exc)
+        return None, f"API returned HTTP {exc.code}: {detail}"
+    except Exception as exc:
+        return None, (
+            "Could not reach Sentinel API. Start FastAPI with "
+            "`python -m uvicorn src.api.main:app --reload --port 8000`. "
+            f"Details: {exc}"
+        )
+
+
+def normalize_claim_result(result):
+    """Normalize claim API responses so the dashboard supports both
+    initial claim decisions and later autonomous observation resolutions.
+    """
+    if not isinstance(result, dict):
+        return result
+
+    normalized = dict(result)
+
+    # New backend field names -> existing dashboard field names.
+    if "bonus_amount_inr" not in normalized:
+        normalized["bonus_amount_inr"] = normalized.get("bonus_amount", 0)
+
+    if "action" not in normalized:
+        normalized["action"] = normalized.get("engine_action", normalized.get("observation_action", ""))
+
+    if "signals" not in normalized:
+        normalized["signals"] = normalized.get("claim_time_features", {}) or {}
+
+    # Resolution responses contain observation evidence separately.
+    if normalized.get("observation_evidence") and not normalized.get("reasons"):
+        normalized["reasons"] = normalized.get("observation_evidence")
+
+    return normalized
+
+
+def resolve_held_claim(claim_id):
+    """Ask Sentinel to autonomously resolve a previously held claim."""
+    encoded_claim_id = urllib.parse.quote(str(claim_id), safe="")
+    url = (
+        f"{SENTINEL_API_URL}/claim-observation/"
+        f"{encoded_claim_id}/resolve"
+    )
+
+    request = urllib.request.Request(
+        url,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            data = json.loads(response.read().decode("utf-8"))
+            return normalize_claim_result(data), None
+
+    except urllib.error.HTTPError as exc:
+        try:
+            detail = exc.read().decode("utf-8")
+        except Exception:
+            detail = str(exc)
+        return None, f"Observation API returned HTTP {exc.code}: {detail}"
+
+    except Exception as exc:
+        return None, (
+            "Could not reach Sentinel observation API. "
+            "Make sure FastAPI is running on port 8000. "
+            f"Details: {exc}"
+        )
+
+
+def render_claim_result(result):
+    """Render an autonomous claim decision returned by the backend."""
+    result = normalize_claim_result(result)
+
+    risk = float(result.get("risk_score", result.get("initial_risk_score", 0)) or 0)
+    level = str(result.get("risk_level", "UNKNOWN"))
+    decision = str(result.get("decision", result.get("final_decision", "UNKNOWN")))
+    bonus_status = str(result.get("bonus_status", "UNKNOWN"))
+    amount = float(result.get("bonus_amount_inr", result.get("bonus_amount", 0)) or 0)
+
+    # A resolved claim keeps the original claim-time risk level. If the
+    # resolution response does not contain it, derive a display level.
+    if level == "UNKNOWN":
+        if risk >= 0.70:
+            level = "HIGH"
+        elif risk >= 0.30:
+            level = "MEDIUM"
+        else:
+            level = "LOW"
+
+    st.markdown("### 🛡️ Sentinel Decision")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.metric("Risk Score", f"{risk:.2f}")
+    with c2:
+        if level == "HIGH":
+            st.error(f"🔴 {level} RISK")
+        elif level == "MEDIUM":
+            st.warning(f"🟡 {level} RISK")
+        else:
+            st.success(f"🟢 {level} RISK")
+    with c3:
+        if decision == "REJECTED":
+            st.error("❌ BONUS REJECTED")
+        elif decision == "VERIFICATION_REQUIRED":
+            st.warning("🟡 BONUS HELD")
+        else:
+            st.success("✅ BONUS APPROVED")
+
+    if decision == "REJECTED":
+        st.error(
+            f"❌ **BONUS REJECTED — {money(amount)} NOT RELEASED**"
+        )
+    elif decision == "VERIFICATION_REQUIRED":
+        st.warning(
+            f"🟡 **BONUS HELD — {money(amount)} remains protected**"
+        )
+    else:
+        st.success(
+            f"✅ **BONUS APPROVED — {money(amount)} RELEASED (SIMULATED)**"
+        )
+
+    # ------------------------------------------------------------
+    # AUTONOMOUS OBSERVATION WORKFLOW
+    # ------------------------------------------------------------
+    claim_id = result.get("claim_id")
+    observation_status = result.get("observation_status")
+
+    if decision == "VERIFICATION_REQUIRED" and claim_id:
+        st.markdown("---")
+        st.markdown("### 🤖 Autonomous Claim Resolution")
+        st.caption(
+            "This claim was initially held because claim-time signals were "
+            "inconclusive. Sentinel can now evaluate post-signup behavioural "
+            "evidence and resolve the held bonus without manual review."
+        )
+
+        if observation_status in ("PENDING", "NOT_STARTED", None):
+            st.info(
+                "⏳ **CLAIM HELD** — no bonus has been released."
+            )
+
+            if st.button(
+                "🤖 Run Autonomous Observation",
+                type="primary",
+                use_container_width=True,
+                key=f"observe_claim_{claim_id}",
+            ):
+                with st.spinner(
+                    "Analysing post-signup behavioural evidence..."
+                ):
+                    resolved, observation_error = resolve_held_claim(
+                        claim_id
+                    )
+
+                if observation_error:
+                    st.error(observation_error)
+                else:
+                    st.session_state["last_claim_result"] = resolved
+                    st.session_state["last_claim_user"] = str(
+                        resolved.get("user_id", result.get("user_id", ""))
+                    )
+                    st.session_state["claim_groq_explanation"] = None
+                    st.session_state["claim_groq_key"] = None
+                    st.rerun()
+
+        elif observation_status in ("RESOLVED", "STILL_HELD"):
+            st.info(
+                "🤖 **Autonomous observation completed.**"
+            )
+
+    # ------------------------------------------------------------
+    # EVIDENCE
+    # ------------------------------------------------------------
+    reasons = result.get("reasons", []) or []
+    if reasons:
+        st.markdown("### 🔎 Evidence")
+        for reason in reasons:
+            st.write(f"• {reason}")
+
+    signals = result.get("signals", {}) or {}
+    if signals:
+        st.markdown("### 📡 Claim-Time Signals")
+        signal_rows = [
+            ("Device matches", signals.get("device_match_count", 0)),
+            ("IP matches", signals.get("ip_match_count", 0)),
+            ("Payment-instrument matches", signals.get("instrument_match_count", 0)),
+            ("Connected accounts", signals.get("connected_user_count", 0)),
+            ("Referrer referrals", signals.get("referral_count", 0)),
+            ("Shared signals with referrer", signals.get("shared_signals_with_referrer", 0)),
+            ("Multi-signal overlap", signals.get("multi_signal_overlap", 0)),
+            ("Strong overlap", signals.get("strong_overlap", 0)),
+            ("Very strong overlap", signals.get("very_strong_overlap", 0)),
+        ]
+        st.dataframe(
+            pd.DataFrame(
+                signal_rows,
+                columns=["Signal", "Value"],
+            ),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    # ------------------------------------------------------------
+    # OBSERVATION EVIDENCE
+    # ------------------------------------------------------------
+    observation_evidence = result.get(
+        "observation_evidence",
+        [],
+    ) or []
+
+    if observation_evidence:
+        st.markdown("### 🔬 Behavioural Observation Evidence")
+
+        observation_score = result.get(
+            "observation_score",
+            result.get("behavior_score"),
+        )
+
+        if observation_score is not None:
+            st.metric(
+                "Behaviour Observation Score",
+                f"{float(observation_score):.2f}",
+            )
+
+        for evidence in observation_evidence:
+            st.write(f"• {evidence}")
+
+        source = result.get(
+            "observation_source",
+            "post_signup_behavior_replay",
+        )
+
+        st.caption(
+            f"Observation source: {source}"
+        )
+
+    st.caption(
+        f"Policy: {result.get('policy', {}).get('policy_version', '1.2-autonomous-observation')} • "
+        f"Dry run: {result.get('dry_run', True)} • "
+        f"Money moved: {result.get('money_moved', False)}"
+    )
+
+    # ------------------------------------------------------------
+    # AI EXPLANATION
+    # ------------------------------------------------------------
+    st.markdown("### 🧠 AI Risk Analyst")
+    st.caption(
+        "Groq explains the supplied Sentinel decision and evidence. "
+        "It does not make or change the fraud decision."
+    )
+
+    claim_key = (
+        f"{result.get('claim_id', '')}|"
+        f"{result.get('user_id', '')}|"
+        f"{result.get('risk_score', '')}|"
+        f"{result.get('decision', '')}|"
+        f"{result.get('observation_score', '')}|"
+        f"{result.get('timestamp', '')}"
+    )
+
+    if st.button(
+        "Generate AI Explanation",
+        type="secondary",
+        key=f"generate_claim_groq_{claim_key}",
+        use_container_width=True,
+    ):
+        with st.spinner("Generating grounded claim explanation..."):
+            explanation = generate_claim_groq_explanation(result)
+
+        st.session_state["claim_groq_explanation"] = explanation
+        st.session_state["claim_groq_key"] = claim_key
+
+    if (
+        st.session_state.get("claim_groq_explanation")
+        and st.session_state.get("claim_groq_key") == claim_key
+    ):
+        st.info(st.session_state["claim_groq_explanation"])
+
+
+# ============================================================
+# LOAD DATA
+# ============================================================
+
+features = load_features()
+scores = load_scores()
+users = load_csv_optional(USERS_PATH)
+referrals = load_csv_optional(REFERRALS_PATH)
+payments = load_csv_optional(PAYMENTS_PATH)
+webhook_events = load_jsonl(WEBHOOK_EVENTS_PATH)
+razorpay_mapping = load_json(MAPPING_PATH)
+metrics = load_json(METRICS_PATH)
+ledger = load_jsonl(LEDGER_PATH)
+audit = load_jsonl(AUDIT_PATH)
+referral_graph, graph_cluster_map = build_referral_graph(users)
+
+
+# ============================================================
+# HEADER
+# ============================================================
+
+st.title("🛡️ Abuse-Ring Sentinel")
+
+st.subheader(
+    "Autonomous Referral-Bonus Fraud Protection"
+)
+
+st.caption(
+    "Defense-only AI risk manager • Razorpay Test Mode • "
+    "Autonomous decisioning"
+)
+
+
+# ============================================================
+# STATUS
+# ============================================================
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.success("● SENTINEL ONLINE")
+
+with col2:
+    st.info("⚡ AUTONOMOUS MODE")
+
+with col3:
+    st.warning("TEST MODE — NO REAL PAYOUTS")
+
+
+st.divider()
+
+# ============================================================
+# TOP-LEVEL SECTION NAVIGATION
+# ============================================================
+
+st.markdown(
+    """
+    <div style="margin: 0.25rem 0 0.8rem 0;">
+      <div style="font-size:0.82rem;color:#6b7280;margin-bottom:0.35rem;">Choose a workspace</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+active_section = st.radio(
+    "Dashboard section",
+    [
+        "🗃️ Data & Graph",
+        "⚡ Bonus Claim",
+        "🔗 Cluster Analysis",
+    ],
+    horizontal=True,
+    label_visibility="collapsed",
+    key="top_level_dashboard_section",
+)
+
+st.divider()
+
+if active_section == "🗃️ Data & Graph":
+    st.markdown(
+        """
+        <div style="background:linear-gradient(135deg,#f1fbf6,#eaf8f1);border:1px solid #bbf7d0;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+          <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">🗃️ Data & Referral Graph</div>
+          <div style="color:#475569;margin-top:4px;">Evidence workspace • inspect datasets, Razorpay test events and the referral network.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.header("🗃️ Evidence Data")
+    st.caption(
+        "Everything below is read from the project's generated datasets and "
+        "Razorpay Test Mode event log — not invented dashboard values."
+    )
+
+    # Dataset counts
+    count_cols = st.columns(5)
+
+    data_counts = [
+        ("Users", len(users)),
+        ("Referral edges", len(referrals)),
+        ("Payments", len(payments)),
+        ("Clusters", len(features)),
+        ("Test-set rows", int(metrics.get("metrics_at_default_threshold", {}).get("test_set_size", 0))),
+    ]
+
+    for col, (label, count) in zip(count_cols, data_counts):
+        with col:
+            st.metric(label, f"{count:,}")
+
+    # Two useful tabs: actual transaction records + raw referral evidence.
+    data_tab, tx_tab, graph_tab = st.tabs([
+        "📦 Dataset",
+        "💳 Test Transactions",
+        "🕸️ Referral Graph",
+    ])
+
+    with data_tab:
+        st.markdown("#### Raw generated data")
+
+        dataset_name = st.selectbox(
+            "Choose a dataset to inspect",
+            [
+                "Users",
+                "Referrals",
+                "Payments",
+                "Cluster features",
+                "Risk scores",
+            ],
+            key="dataset_inspector_final",
+        )
+
+        dataset_map = {
+            "Users": users,
+            "Referrals": referrals,
+            "Payments": payments,
+            "Cluster features": features,
+            "Risk scores": scores,
+        }
+
+        inspect_df = dataset_map[dataset_name]
+
+        if not inspect_df.empty:
+            st.dataframe(
+                inspect_df.head(30),
+                use_container_width=True,
+                hide_index=True,
+            )
+            st.caption(
+                f"Showing the first 30 rows of {len(inspect_df):,} total rows."
+            )
+        else:
+            st.warning(f"{dataset_name} is not available.")
+
+    with tx_tab:
+        st.markdown("#### 💳 Payment / bonus transaction evidence")
+
+        if not payments.empty:
+            tx_df = payments.copy()
+
+            # Attach the graph cluster so the transaction can be traced back
+            # to the referral graph.
+            if not users.empty and not graph_cluster_map.empty:
+                cluster_lookup = graph_cluster_map.rename("graph_cluster_id").reset_index()
+                cluster_lookup.columns = ["user_id", "graph_cluster_id"]
+                tx_df = tx_df.merge(cluster_lookup, on="user_id", how="left")
+
+            show_cols = [
+                c for c in [
+                    "payment_id",
+                    "user_id",
+                    "graph_cluster_id",
+                    "instrument_id",
+                    "amount",
+                    "purpose",
+                    "created_ts",
+                    "method",
+                ]
+                if c in tx_df.columns
+            ]
+
+            st.dataframe(
+                tx_df.sort_values("created_ts", ascending=False).head(25)[show_cols],
+                use_container_width=True,
+                hide_index=True,
+            )
+
+            st.caption(
+                "These are the project's synthetic payment/bonus transaction records. "
+                "They are separate from the live Razorpay Test Mode payment used to prove the webhook path."
+            )
+        else:
+            st.warning("data/payments.csv not found.")
+
+        st.markdown("#### 🔴 Razorpay Test Mode events")
+
+        if webhook_events:
+            event_rows = []
+            for event in webhook_events[-20:][::-1]:
+                event_rows.append({
+                    "Event": event.get("event", ""),
+                    "Payment ID": event.get("payment_id", ""),
+                    "Method": event.get("method", ""),
+                    "Received": event.get("received", ""),
+                    "Signature verified": event.get("signature_verified", ""),
+                })
+
+            st.dataframe(
+                pd.DataFrame(event_rows),
+                use_container_width=True,
+                hide_index=True,
+            )
+        else:
+            st.info(
+                "No webhook_events.jsonl found yet. The Razorpay Test Mode webhook "
+                "section will populate after another payment.captured event."
+            )
+
+        if razorpay_mapping:
+            st.caption(
+                f"Merchant-side demo mapping contains {len(razorpay_mapping)} payment → cluster link(s)."
+            )
+
+    with graph_tab:
+        st.markdown("#### 🕸️ Complete referral-network graph")
+        st.caption(
+            "All 6,315 users are shown. Nodes are separated using the dataset's cluster_type: "
+            "FRAUD_RING, FAMILY_FRIEND and ORGANIC_SINGLE. Referral edges come from users.csv. "
+            "Payment activity and model risk are attached to node hover details."
+        )
+
+        fraud_users = int((users.get("cluster_type", pd.Series(dtype=object)) == "FRAUD_RING").sum())
+        friend_users = int((users.get("cluster_type", pd.Series(dtype=object)) == "FAMILY_FRIEND").sum())
+        organic_users = int((users.get("cluster_type", pd.Series(dtype=object)) == "ORGANIC_SINGLE").sum())
+
+        a, b, c, d = st.columns(4)
+        a.metric("All users", f"{len(users):,}")
+        b.metric("🚨 Fraudsters", f"{fraud_users:,}")
+        c.metric("👥 Friends / Family", f"{friend_users:,}")
+        d.metric("👤 Organic", f"{organic_users:,}")
+
+        if not users.empty and referral_graph.number_of_nodes() > 0:
+            global_fig = complete_referral_graph_figure(
+                users, payments, scores, referral_graph
+            )
+            if global_fig is not None:
+                st.plotly_chart(
+                    global_fig,
+                    use_container_width=True,
+                    key="complete_referral_network_graph",
+                )
+
+            st.info(
+                "🚨 Red = fraudsters | 👥 Green = friends/family | 👤 Gray = organic users. "
+                "Hover any node to inspect its cluster, risk score, referrals, payments, "
+                "device, IP, payment instrument and bonus."
+            )
+
+            st.markdown("#### 🔍 Zoom into one cluster")
+            cluster_options = sorted(users["cluster_id"].astype(str).unique().tolist()) if "cluster_id" in users.columns else []
+            if cluster_options:
+                graph_choice = st.selectbox(
+                    "Choose a cluster",
+                    cluster_options,
+                    index=cluster_options.index("comp_1653") if "comp_1653" in cluster_options else 0,
+                    key="graph_cluster_selector",
+                )
+                focused_fig = referral_graph_figure(users, referral_graph, graph_choice)
+                if focused_fig is not None:
+                    st.plotly_chart(focused_fig, use_container_width=True, key="focused_referral_network_graph")
+
+                members = users[users["cluster_id"].astype(str) == str(graph_choice)].copy()
+                if not members.empty:
+                    member_cols = [c for c in [
+                        "user_id", "cluster_type", "referred_by", "device_id", "signup_ip",
+                        "payment_instrument_id", "bonus_amount_claimed", "num_txn_post_signup",
+                        "total_txn_value_post_signup", "active_days_post_signup"
+                    ] if c in members.columns]
+                    st.dataframe(members[member_cols], use_container_width=True, hide_index=True)
+        else:
+            st.info("users.csv / referral data is not available.")
+
+elif active_section == "⚡ Bonus Claim":
+    st.markdown(
+        """
+        <div style="background:linear-gradient(135deg,#eef7ff,#e6f2ff);border:1px solid #bfdbfe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+          <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">⚡ Live Bonus Claim</div>
+          <div style="color:#475569;margin-top:4px;">Claim-level analysis • evaluate one referral-bonus claim using immediate evidence.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if users.empty:
+        st.warning("users.csv is not available, so the live claim simulator cannot be populated.")
+    else:
+        claim_users = users.copy()
+        claim_users["user_id"] = claim_users["user_id"].astype(str)
+
+        # Put known demo cases first so the pitch demo is one click away.
+        preferred = [
+            "u_aa9fcf81d4",
+            "u_52ec14b2e5",
+            "u_7b5d4c1d8f",
+        ]
+        existing_preferred = [u for u in preferred if u in set(claim_users["user_id"])]
+        remaining = [u for u in claim_users["user_id"].tolist() if u not in existing_preferred]
+        claim_options = existing_preferred + remaining
+
+        selected_claim_user = st.selectbox(
+            "User attempting to claim",
+            claim_options,
+            key="live_claim_user",
+        )
+
+        selected_user_rows = claim_users[
+            claim_users["user_id"] == selected_claim_user
+        ]
+
+        selected_user = selected_user_rows.iloc[0]
+
+        default_referrer = selected_user.get("referred_by", "")
+        if pd.isna(default_referrer):
+            default_referrer = ""
+
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.text_input(
+                "User ID",
+                value=selected_claim_user,
+                disabled=True,
+                key="claim_user_display",
+            )
+        with c2:
+            st.text_input(
+                "Referrer ID",
+                value=str(default_referrer),
+                disabled=True,
+                key="claim_referrer_display",
+            )
+        with c3:
+            claim_bonus = st.number_input(
+                "Bonus amount (₹)",
+                min_value=1.0,
+                value=500.0,
+                step=50.0,
+                key="claim_bonus_amount",
+            )
+
+        payment_id = st.text_input(
+            "Payment ID (optional)",
+            value="",
+            placeholder="pay_test_...",
+            key="claim_payment_id",
+        )
+
+        user_type = str(selected_user.get("cluster_type", "UNKNOWN"))
+        st.info(
+            f"Dataset context: **{user_type}**. "
+            "This label is shown for demo context only; it is NOT sent to the claim API "
+            "and is NOT used by the live decision."
+        )
+
+        if st.button(
+            "🚀 CLAIM BONUS",
+            type="primary",
+            use_container_width=True,
+            key="claim_bonus_button",
+        ):
+            with st.spinner("Sentinel is evaluating claim-time signals..."):
+                claim_result, claim_error = submit_bonus_claim(
+                    user_id=selected_claim_user,
+                    referrer_id=str(default_referrer) if default_referrer else None,
+                    bonus_amount=claim_bonus,
+                    payment_id=payment_id.strip(),
+                )
+
+            if claim_error:
+                st.error(claim_error)
+            else:
+                st.session_state["last_claim_result"] = claim_result
+                st.session_state["last_claim_user"] = selected_claim_user
+                st.rerun()
+
+        last_claim = st.session_state.get("last_claim_result")
+        last_claim_user = st.session_state.get("last_claim_user")
+
+        if last_claim and last_claim_user == selected_claim_user:
+            render_claim_result(last_claim)
+        else:
+            st.info(
+                "Choose a user and click **CLAIM BONUS**. The backend will make the decision "
+                "using only claim-time signals."
+            )
+
+    st.divider()
+
+elif active_section == "🔗 Cluster Analysis":
+    st.markdown(
+        """
+        <div style="background:linear-gradient(135deg,#f7f1ff,#f1e9ff);border:1px solid #d8b4fe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+          <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">🔗 Fraud Cluster Analysis</div>
+          <div style="color:#475569;margin-top:4px;">Cluster-level analysis • inspect connected accounts, model evidence, policy and AI explanation.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    default_metrics = metrics.get(
+        "metrics_at_default_threshold",
+        {}
+    )
+
+    precision = default_metrics.get(
+        "precision",
+        0
+    )
+
+    recall = default_metrics.get(
+        "recall",
+        0
+    )
+
+    f1 = default_metrics.get(
+        "f1",
+        0
+    )
+
+    roc_auc = default_metrics.get(
+        "roc_auc",
+        0
+    )
+
+
+    released = 0
+    blocked = 0
+    blocked_money = 0.0
+    released_money = 0.0
+
+    # Calculate synthetic bonus exposure directly from scored clusters.
+    # This is exposure protected by the model, not real money movement.
+    if not scores.empty:
+        score_df = scores.copy()
+        score_df["cluster_id"] = score_df["cluster_id"].astype(str)
+
+        if not features.empty and "total_bonus_claimed" in features.columns:
+            bonus_df = features[["cluster_id", "total_bonus_claimed"]].copy()
+            bonus_df["cluster_id"] = bonus_df["cluster_id"].astype(str)
+
+            score_df = score_df.merge(
+                bonus_df,
+                on="cluster_id",
+                how="left",
+            )
+
+            score_df["total_bonus_claimed"] = pd.to_numeric(
+                score_df["total_bonus_claimed"],
+                errors="coerce",
+            ).fillna(0)
+
+            released_mask = score_df["risk_score"] < 0.30
+            blocked_mask = score_df["risk_score"] >= 0.70
+
+            released = int(released_mask.sum())
+            blocked = int(blocked_mask.sum())
+
+            released_money = float(
+                score_df.loc[released_mask, "total_bonus_claimed"].sum()
+            )
+            blocked_money = float(
+                score_df.loc[blocked_mask, "total_bonus_claimed"].sum()
+            )
+        else:
+            released = int((score_df["risk_score"] < 0.30).sum())
+            blocked = int((score_df["risk_score"] >= 0.70).sum())
+
+    else:
+        # Fallback to the ledger if scored cluster data is unavailable.
+        for record in ledger:
+            action = str(record.get("action", "")).upper()
+
+            try:
+                amount = float(
+                    record.get(
+                        "bonus_amount",
+                        record.get("amount", 0),
+                    )
+                    or 0
+                )
+            except Exception:
+                amount = 0.0
+
+            if "BLOCK" in action or "HOLD" in action:
+                blocked += 1
+                blocked_money += amount
+            elif "RELEASE" in action:
+                released += 1
+                released_money += amount
+
+
+    k1, k2, k3, k4 = st.columns(4)
+
+    with k1:
+
+        st.metric(
+            "BONUSES RELEASED",
+            f"{released:,}",
+        )
+
+    with k2:
+
+        st.metric(
+            "BONUSES BLOCKED",
+            f"{blocked:,}",
+        )
+
+    with k3:
+
+        st.metric(
+            "BONUS EXPOSURE PROTECTED",
+            money(blocked_money),
+        )
+
+    with k4:
+
+        st.metric(
+            "MODEL RECALL",
+            f"{recall:.1%}",
+        )
+
+
+    st.divider()
+
+    if not scores.empty:
+
+        cluster_ids = (
+            scores["cluster_id"]
+            .astype(str)
+            .tolist()
+        )
+
+        default_index = (
+            cluster_ids.index("comp_1653")
+            if "comp_1653" in cluster_ids
+            else (
+                cluster_ids.index("comp_0")
+                if "comp_0" in cluster_ids
+                else 0
+            )
+        )
+
+        selected_cluster = st.selectbox(
+            "Select a cluster to inspect",
+            cluster_ids,
+            index=default_index,
+        )
+
+        # IMPORTANT: risk scores and cluster features live in separate files.
+        # Merge them before running verification or generating the AI explanation.
+        # Without this merge, missing feature columns silently become 0.0.
+        score_view = scores.copy()
+        score_view["cluster_id"] = score_view["cluster_id"].astype(str)
+
+        if not features.empty:
+            feature_view = features.copy()
+            feature_view["cluster_id"] = feature_view["cluster_id"].astype(str)
+            feature_view = feature_view.drop(
+                columns=["_true_cluster_type", "label_fraud"],
+                errors="ignore",
+            )
+            score_view = score_view.merge(
+                feature_view,
+                on="cluster_id",
+                how="left",
+                suffixes=("", "_feature"),
+            )
+
+        selected = score_view[
+            score_view["cluster_id"].astype(str) == selected_cluster
+        ]
+
+        if not selected.empty:
+
+            row = selected.iloc[0]
+            score = float(row["risk_score"])
+
+            # ML action
+            if score < 0.30:
+                initial_action = "RELEASE"
+            elif score < 0.70:
+                initial_action = "HOLD_FOR_VERIFICATION"
+            else:
+                initial_action = "BLOCK_BONUS"
+
+            # Deterministic verification for medium-risk cases.
+            checks = {}
+
+            def value(column, default=0.0):
+                try:
+                    return float(row.get(column, default))
+                except Exception:
+                    return default
+
+            if initial_action == "HOLD_FOR_VERIFICATION":
+                checks = {
+                    "post_signup_activity": {
+                        "value": value("avg_txn_post_signup"),
+                        "threshold": 1.0,
+                        "passed": value("avg_txn_post_signup") >= 1.0,
+                    },
+                    "sustained_activity": {
+                        "value": value("avg_active_days_post_signup"),
+                        "threshold": 2.0,
+                        "passed": value("avg_active_days_post_signup") >= 2.0,
+                    },
+                    "meaningful_transaction_value": {
+                        "value": value("avg_txn_value_post_signup"),
+                        "threshold": 100.0,
+                        "passed": value("avg_txn_value_post_signup") >= 100.0,
+                    },
+                    "engagement_presence": {
+                        "value": 1.0 - value("pct_zero_engagement"),
+                        "threshold": 0.5,
+                        "passed": (
+                            1.0 - value("pct_zero_engagement")
+                        ) >= 0.5,
+                    },
+                    "payment_instrument_diversity": {
+                        "value": value("instrument_reuse_ratio"),
+                        "threshold": 0.5,
+                        "passed": value("instrument_reuse_ratio") <= 0.5,
+                    },
+                    "device_diversity": {
+                        "value": value("device_reuse_ratio"),
+                        "threshold": 0.5,
+                        "passed": value("device_reuse_ratio") <= 0.5,
+                    },
+                    "ip_diversity": {
+                        "value": value("ip_reuse_ratio"),
+                        "threshold": 0.5,
+                        "passed": value("ip_reuse_ratio") <= 0.5,
+                    },
+                }
+
+                checks_passed = sum(
+                    1 for check in checks.values() if check["passed"]
+                )
+
+                final_action = (
+                    "RELEASE"
+                    if checks_passed >= 5
+                    else "BLOCK_BONUS"
+                )
+            else:
+                checks_passed = None
+                final_action = initial_action
+
+            left, middle, right = st.columns([1, 2, 1])
+
+            with left:
+                st.metric("CLUSTER", selected_cluster)
+
+            with middle:
+                st.metric("RISK SCORE", f"{score:.3f}")
+
+            with right:
+                if final_action == "RELEASE":
+                    st.success("🟢 RELEASE")
+                elif final_action == "HOLD_FOR_VERIFICATION":
+                    st.warning("🟡 VERIFY")
+                else:
+                    st.error("🔴 BLOCK BONUS")
+
+            # Decision pipeline
+            st.markdown("### Decision Pipeline")
+
+            p1, p2, p3, p4 = st.columns(4)
+
+            with p1:
+                st.info(f"**ML RISK**\n\n{score:.3f}")
+
+            with p2:
+                st.warning(
+                    f"**MODEL ACTION**\n\n{initial_action}"
+                    if initial_action == "HOLD_FOR_VERIFICATION"
+                    else f"**MODEL ACTION**\n\n{initial_action}"
+                )
+
+            with p3:
+                if checks_passed is None:
+                    st.info("**VERIFICATION**\n\nNot required")
+                elif checks_passed >= 5:
+                    st.success(
+                        f"**VERIFICATION**\n\n{checks_passed}/7 PASS"
+                    )
+                else:
+                    st.error(
+                        f"**VERIFICATION**\n\n{checks_passed}/7 PASS"
+                    )
+
+            with p4:
+                if final_action == "RELEASE":
+                    st.success("**FINAL ACTION**\n\nRELEASE")
+                else:
+                    st.error("**FINAL ACTION**\n\nBLOCK BONUS")
+
+            # Bonus amount
+            bonus_amount = 0.0
+            if "total_bonus_claimed" in row.index:
+                try:
+                    bonus_amount = float(row["total_bonus_claimed"])
+                except Exception:
+                    bonus_amount = 0.0
+
+            st.metric("BONUS AT STAKE", money(bonus_amount))
+
+            # Verification evidence
+            if checks:
+                st.markdown("### 🤖 Automated Verification Evidence")
+
+                labels = {
+                    "post_signup_activity": "Post-signup activity",
+                    "sustained_activity": "Sustained activity",
+                    "meaningful_transaction_value": "Meaningful transaction value",
+                    "engagement_presence": "Engagement presence",
+                    "payment_instrument_diversity": "Payment instrument diversity",
+                    "device_diversity": "Device diversity",
+                    "ip_diversity": "IP diversity",
+                }
+
+                for key, item in checks.items():
+                    c1, c2, c3 = st.columns([2, 3, 1])
+
+                    with c1:
+                        st.write(labels.get(key, key))
+
+                    with c2:
+                        val = float(item["value"])
+                        threshold = float(item["threshold"])
+
+                        if "diversity" in key or "engagement" in key:
+                            display = f"{val:.1%}"
+                            progress = min(max(val, 0), 1)
+                        else:
+                            display = f"{val:.2f}"
+                            progress = min(
+                                max(val / max(threshold, 1.0), 0),
+                                1,
+                            )
+
+                        st.progress(
+                            progress,
+                            text=f"{display} | threshold {threshold:g}",
+                        )
+
+                    with c3:
+                        if item["passed"]:
+                            st.success("PASS")
+                        else:
+                            st.error("FAIL")
+
+            # Model evidence
+            st.markdown("### 🔎 Why the Model Flagged This Cluster")
+
+            explanation_columns = [
+                ("instrument_reuse_ratio", "Payment Instrument Reuse"),
+                ("cluster_size", "Cluster Size"),
+                ("n_referral_edges", "Referral Edges"),
+                ("device_reuse_ratio", "Device Reuse"),
+            ]
+
+            for column, label in explanation_columns:
+                if column in row.index:
+                    try:
+                        val = float(row[column])
+                    except Exception:
+                        continue
+
+                    c1, c2 = st.columns([2, 3])
+
+                    with c1:
+                        st.write(label)
+
+                    with c2:
+                        if "reuse" in column:
+                            st.progress(
+                                min(max(val, 0), 1),
+                                text=f"{val:.1%}",
+                            )
+                        else:
+                            st.progress(
+                                min(max(val / 20, 0), 1),
+                                text=f"{val:.2f}",
+                            )
+
+            # Groq explanation
+            st.markdown("### 🧠 Cluster-Level AI Risk Analyst")
+
+            st.caption(
+                "Groq explains the existing ML + policy decision. "
+                "It does not control the fraud decision. Evidence is taken "
+                "from the selected cluster's actual feature row."
+            )
+
+            if st.button(
+                "Generate AI Explanation",
+                type="primary",
+                key="generate_groq_explanation",
+            ):
+                with st.spinner("Generating evidence-based explanation..."):
+                    explanation = generate_groq_explanation(
+                        row,
+                        initial_action,
+                        final_action,
+                        checks,
+                    )
+
+                st.session_state["groq_explanation"] = explanation
+                st.session_state["groq_explanation_cluster"] = (
+                    selected_cluster
+                )
+
+            if (
+                st.session_state.get("groq_explanation")
+                and st.session_state.get("groq_explanation_cluster")
+                == selected_cluster
+            ):
+                st.info(st.session_state["groq_explanation"])
+
+    else:
+        st.warning("No scored clusters found. Run the pipeline first.")
+    st.divider()
+
+    # ============================================================
+    # POLICY
+    # ============================================================
+
+    st.header("🧠 Autonomous Policy")
+
+    p1, p2, p3 = st.columns(3)
+
+    with p1:
+
+        st.success(
+            "🟢 LOW RISK"
+        )
+
+        st.markdown(
+            "**Risk < 0.30**"
+        )
+
+        st.write(
+            "Automatically release bonus."
+        )
+
+
+    with p2:
+
+        st.warning(
+            "🟡 MEDIUM RISK"
+        )
+
+        st.markdown(
+            "**0.30 ≤ Risk < 0.70**"
+        )
+
+        st.write(
+            "Run secondary automated verification."
+        )
+
+
+    with p3:
+
+        st.error(
+            "🔴 HIGH RISK"
+        )
+
+        st.markdown(
+            "**Risk ≥ 0.70**"
+        )
+
+        st.write(
+            "Automatically block bonus."
+        )
+
+
+    st.divider()
+
+
+    # ============================================================
+    # MODEL PERFORMANCE
+    # ============================================================
+
+    st.header("📊 Held-Out Test Performance")
+
+    m1, m2, m3, m4 = st.columns(4)
+
+    with m1:
+        st.metric(
+            "Precision",
+            f"{precision:.3f}",
+        )
+
+    with m2:
+        st.metric(
+            "Recall",
+            f"{recall:.3f}",
+        )
+
+    with m3:
+        st.metric(
+            "F1",
+            f"{f1:.3f}",
+        )
+
+    with m4:
+        st.metric(
+            "ROC-AUC",
+            f"{roc_auc:.3f}",
+        )
+
+    st.caption(
+        "Metrics are from the held-out synthetic test set."
+    )
+
+
+    # ============================================================
+    # RISK DISTRIBUTION
+    # ============================================================
+
+    if not scores.empty:
+
+        st.header("📈 Risk Distribution")
+
+        chart_df = scores.copy()
+
+        chart_df["decision"] = (
+            chart_df["risk_score"]
+            .apply(risk_label)
+        )
+
+        fig = px.histogram(
+            chart_df,
+            x="risk_score",
+            color="decision",
+            nbins=30,
+            title="Cluster Risk Scores",
+        )
+
+        fig.update_layout(
+            xaxis_title="Risk Score",
+            yaxis_title="Number of Clusters",
+            legend_title="Decision",
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True,
+        )
+
+
+    # ============================================================
+    # FRAUD-RING SIGNALS
+    # ============================================================
+
+    if not features.empty:
+
+        st.header("🔗 Referral-Ring Signals")
+
+        graph_cols = [
+            "cluster_size",
+            "n_referral_edges",
+            "device_reuse_ratio",
+            "ip_reuse_ratio",
+            "instrument_reuse_ratio",
+        ]
+
+        available_cols = [
+            c
+            for c in graph_cols
+            if c in features.columns
+        ]
+
+        if available_cols:
+
+            signal_df = features[
+                available_cols
+            ].describe().T
+
+            signal_df = signal_df[
+                ["mean", "min", "max"]
+            ]
+
+            signal_df.columns = [
+                "Average",
+                "Minimum",
+                "Maximum",
+            ]
+
+            st.dataframe(
+                signal_df.round(3),
+                use_container_width=True,
+            )
+
+
+    # ============================================================
+    # RECENT AUDIT TRAIL
+    # ============================================================
+
+    st.header("📜 Autonomous Audit Trail")
+
+    if audit:
+
+        audit_rows = []
+
+        for record in audit[-15:]:
+
+            audit_rows.append(
+                {
+                    "Timestamp": record.get(
+                        "timestamp",
+                        "",
+                    ),
+                    "Cluster": record.get(
+                        "cluster_id",
+                        "",
+                    ),
+                    "Action": record.get(
+                        "action",
+                        record.get(
+                            "decision",
+                            "",
+                        ),
+                    ),
+                    "Risk": record.get(
+                        "risk_score",
+                        "",
+                    ),
+                    "Policy": record.get(
+                        "policy_version",
+                        "1.1-autonomous",
+                    ),
+                }
+            )
+
+        audit_df = pd.DataFrame(
+            audit_rows
+        )
+
+        st.dataframe(
+            audit_df,
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    else:
+
+        st.info(
+            "No audit records available yet."
+        )
+
+
+    # ============================================================
+    # MONEY MOVEMENT
+    # ============================================================
+
+    st.header("💰 Bonus Protection")
+
+    b1, b2 = st.columns(2)
+
+    with b1:
+
+        st.metric(
+            "Bonus Exposure Blocked",
+            money(blocked_money),
+        )
+
+        st.caption(
+            "Synthetic/test-mode exposure prevented "
+            "by autonomous policy."
+        )
+
+    with b2:
+
+        st.metric(
+            "Bonus Released / Simulated",
+            money(released_money),
+        )
+
+        st.caption(
+            "Approved bonus payouts are simulated "
+            "because Razorpay credentials are not configured."
+        )
+
+
+    # ============================================================
+    # FOOTER
+    # ============================================================
+
+    st.divider()
+
+    st.caption(
+        "Abuse-Ring Sentinel • Policy 1.1-autonomous • "
+        "Defense-only • Razorpay Test Mode"
+    )
+
+    st.caption(
+        "No real payment was blocked or transferred by this demo."
+    )
+
