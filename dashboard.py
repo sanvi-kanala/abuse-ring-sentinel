@@ -963,17 +963,15 @@ def _claim_groq_fallback(facts):
 # LIVE CLAIM API
 # ============================================================
 
-# API endpoint:
-# - Local development: defaults to http://127.0.0.1:8000
-# - Streamlit Cloud: set SENTINEL_API_URL in Streamlit Secrets
-#   to the deployed Render API URL.
 def _get_sentinel_api_url():
-    secret_url = None
+    """Resolve the Sentinel API URL for local or Streamlit Cloud use."""
+    # Streamlit Cloud: use the app secret when configured.
     try:
         secret_url = st.secrets.get("SENTINEL_API_URL")
     except Exception:
-        pass
+        secret_url = None
 
+    # Local development / other hosts: fall back to environment variable.
     configured = secret_url or os.getenv("SENTINEL_API_URL")
     return (configured or "http://127.0.0.1:8000").rstrip("/")
 
@@ -987,8 +985,7 @@ def _sentinel_port_open():
         parsed = urllib.parse.urlparse(SENTINEL_API_URL)
         host = parsed.hostname or "127.0.0.1"
 
-        # A deployed Streamlit dashboard must never try to launch a second
-        # FastAPI process. Only perform the socket check for local development.
+        # Remote API: it is not local to this Streamlit process.
         if host not in {"127.0.0.1", "localhost", "0.0.0.0"}:
             return True
 
@@ -1000,12 +997,11 @@ def _sentinel_port_open():
 
 
 def _ensure_sentinel_api():
-    """Ensure the local API is available; remote deployed APIs need no startup."""
+    """Ensure local FastAPI is available without spawning it on Streamlit Cloud."""
     parsed = urllib.parse.urlparse(SENTINEL_API_URL)
     host = parsed.hostname or "127.0.0.1"
 
-    # On Streamlit Cloud, SENTINEL_API_URL points to Render. Never attempt
-    # to spawn the API locally in the Streamlit container.
+    # A deployed dashboard talks to the Render API. Never start FastAPI here.
     if host not in {"127.0.0.1", "localhost", "0.0.0.0"}:
         return True, None
 
@@ -1026,6 +1022,8 @@ def _ensure_sentinel_api():
                 "-m",
                 "uvicorn",
                 app_module,
+                "--host",
+                "127.0.0.1",
                 "--port",
                 "8000",
             ],
@@ -1037,11 +1035,10 @@ def _ensure_sentinel_api():
     except Exception as exc:
         return False, (
             "Sentinel API is not running and could not be started automatically. "
-            f"Start it manually with: python -m uvicorn {app_module} --port 8000. "
+            f"Start it manually with: python -m uvicorn {app_module} --host 127.0.0.1 --port 8000. "
             f"Details: {exc}"
         )
 
-    # Give Uvicorn a few seconds to import the app and bind the port.
     for _ in range(30):
         if _sentinel_port_open():
             return True, None
@@ -1049,10 +1046,9 @@ def _ensure_sentinel_api():
 
     return False, (
         "Sentinel API did not become available on port 8000. "
-        "Run `python -m uvicorn src.api.main:app --port 8000` in the project folder "
-        "and reload the dashboard."
+        "Run `python -m uvicorn src.api.main:app --host 127.0.0.1 --port 8000` "
+        "in the project folder and reload the dashboard."
     )
-
 
 def submit_bonus_claim(user_id, referrer_id, bonus_amount, payment_id=""):
     """Call the real local FastAPI claim endpoint."""
@@ -1090,8 +1086,8 @@ def submit_bonus_claim(user_id, referrer_id, bonus_amount, payment_id=""):
         return None, f"API returned HTTP {exc.code}: {detail}"
     except Exception as exc:
         return None, (
-            f"Could not reach Sentinel API at {SENTINEL_API_URL}. "
-            "Check the deployed API URL and Streamlit secret/configuration. "
+            "Could not reach Sentinel API. Start FastAPI with "
+            "`python -m uvicorn src.api.main:app --reload --port 8000`. "
             f"Details: {exc}"
         )
 
@@ -1154,8 +1150,8 @@ def resolve_held_claim(claim_id):
 
     except Exception as exc:
         return None, (
-            f"Could not reach Sentinel observation API at {SENTINEL_API_URL}. "
-            "Check the deployed API URL and Streamlit secret/configuration. "
+            "Could not reach Sentinel observation API. "
+            "Make sure FastAPI is running on port 8000. "
             f"Details: {exc}"
         )
 
