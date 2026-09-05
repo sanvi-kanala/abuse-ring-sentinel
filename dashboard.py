@@ -39,53 +39,77 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-/* ---------- Global canvas ---------- */
+/* ============================================================
+   ABUSE-RING SENTINEL — DARK + MOBILE-FRIENDLY THEME
+   ============================================================ */
+
 .stApp {
     background:
-        radial-gradient(circle at 8% 0%, rgba(37,99,235,.12), transparent 28%),
-        radial-gradient(circle at 92% 8%, rgba(124,58,237,.10), transparent 26%),
-        #f4f7fb;
+        radial-gradient(circle at 10% 0%, rgba(37,99,235,.16), transparent 28%),
+        radial-gradient(circle at 90% 5%, rgba(99,102,241,.14), transparent 28%),
+        linear-gradient(180deg, #07111f 0%, #0b1729 48%, #091321 100%);
+    color: #f8fafc;
 }
+
 .block-container {
-    padding-top: 1.35rem;
+    padding-top: 1.2rem;
     padding-bottom: 2rem;
     max-width: 1500px;
+}
+
+h1, h2, h3, h4 {
+    color: #f8fafc !important;
+}
+
+p, span, label, .stMarkdown {
+    color: #dbe7f5;
+}
+
+.stCaption,
+[data-testid="stCaptionContainer"] {
+    color: #9fb1c9 !important;
 }
 
 /* ---------- Sidebar ---------- */
 section[data-testid="stSidebar"] {
     background:
-        radial-gradient(circle at 20% 8%, rgba(59,130,246,.22), transparent 25%),
-        radial-gradient(circle at 90% 42%, rgba(124,58,237,.18), transparent 28%),
-        linear-gradient(180deg, #0b1630 0%, #111c3a 48%, #15112f 100%);
-    border-right: 1px solid #27385f;
-    box-shadow: 8px 0 30px rgba(15,23,42,.12);
+        radial-gradient(circle at 20% 8%, rgba(59,130,246,.20), transparent 25%),
+        radial-gradient(circle at 90% 42%, rgba(124,58,237,.16), transparent 28%),
+        linear-gradient(180deg, #071225 0%, #0b1630 50%, #100d25 100%);
+    border-right: 1px solid #243653;
+    box-shadow: 8px 0 30px rgba(0,0,0,.35);
 }
+
 section[data-testid="stSidebar"] > div {
     padding-top: 1.15rem;
 }
+
 section[data-testid="stSidebar"] * {
     color: #e8eefc;
 }
+
 .sentinel-brand {
     padding: .65rem .7rem 1rem .7rem;
     margin-bottom: .3rem;
     border-radius: 15px;
-    background: linear-gradient(135deg, rgba(37,99,235,.25), rgba(124,58,237,.18));
-    border: 1px solid rgba(147,197,253,.18);
-    box-shadow: 0 8px 24px rgba(2,6,23,.20);
+    background: linear-gradient(135deg, rgba(37,99,235,.25), rgba(124,58,237,.20));
+    border: 1px solid rgba(147,197,253,.20);
+    box-shadow: 0 8px 24px rgba(0,0,0,.30);
 }
+
 .brand-title {
     font-size: 1.38rem;
     font-weight: 850;
     letter-spacing: -.025em;
     color: #ffffff !important;
 }
+
 .brand-sub {
-    color: #a9b9d8 !important;
+    color: #9fb1d0 !important;
     font-size: .78rem;
     margin-top: .2rem;
 }
+
 .nav-caption {
     color: #7f9bc8 !important;
     font-size: .68rem;
@@ -94,141 +118,171 @@ section[data-testid="stSidebar"] * {
     font-weight: 850;
     margin: .7rem 0 .45rem .25rem;
 }
+
 section[data-testid="stSidebar"] [data-testid="stRadio"] label {
     border-radius: 12px;
     padding: .62rem .72rem;
     margin-bottom: .18rem;
     border: 1px solid transparent;
     background: rgba(255,255,255,.025);
-    transition: all .16s ease;
 }
+
 section[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
-    background: linear-gradient(90deg, rgba(59,130,246,.16), rgba(99,102,241,.08));
+    background: rgba(59,130,246,.15);
     border-color: rgba(125,211,252,.18);
-    transform: translateX(2px);
 }
+
 section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
     background: linear-gradient(100deg, #2563eb 0%, #4f46e5 58%, #6366f1 100%);
     border: 1px solid rgba(191,219,254,.38);
     box-shadow:
         inset 3px 0 0 #bfdbfe,
         0 8px 22px rgba(37,99,235,.25);
-    transform: translateX(2px);
 }
+
 section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) p {
     color: #ffffff !important;
     font-weight: 800;
 }
+
 section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
     color: #cbd8ef !important;
 }
-section[data-testid="stSidebar"] hr {
-    border-color: #304263;
-}
-section[data-testid="stSidebar"] .stCaption {
-    color: #8fa5cc !important;
+
+/* ---------- Metric cards ---------- */
+[data-testid="stMetric"] {
+    border: 1px solid #2c4263;
+    border-radius: 15px;
+    padding: .75rem .85rem;
+    background: linear-gradient(145deg, #111f34 0%, #0d192b 100%);
+    box-shadow: 0 8px 22px rgba(0,0,0,.25);
 }
 
-/* ---------- Header ---------- */
-.hero {
-    border: 1px solid #cbd8ea;
-    border-radius: 20px;
-    padding: 1.25rem 1.35rem;
-    background:
-        linear-gradient(135deg, #0f1b33 0%, #172554 48%, #312e81 100%);
-    box-shadow: 0 12px 34px rgba(30,41,59,.16);
-    margin-bottom: 1.15rem;
-    position: relative;
-    overflow: hidden;
+[data-testid="stMetricLabel"] {
+    color: #9fb1c9 !important;
 }
-.hero:after {
-    content: "";
-    position: absolute;
-    width: 260px;
-    height: 260px;
-    right: -90px;
-    top: -150px;
-    border-radius: 50%;
-    background: rgba(96,165,250,.18);
-}
-.hero-title {
-    font-size: 2rem;
-    font-weight: 850;
-    letter-spacing: -.04em;
+
+[data-testid="stMetricValue"] {
     color: #f8fafc !important;
 }
-.hero-sub {
-    color: #cbd5e1 !important;
-    margin-top: .22rem;
-    font-size: .96rem;
-}
-.status-chip {
-    display: inline-block;
-    padding: .3rem .62rem;
-    border-radius: 999px;
-    background: rgba(255,255,255,.10);
-    border: 1px solid rgba(255,255,255,.14);
-    color: #e2e8f0 !important;
-    font-size: .71rem;
-    font-weight: 750;
-    margin-right: .35rem;
-}
 
-/* ---------- Main content ---------- */
-h1, h2, h3, h4 {
-    color: #0f172a;
-}
-[data-testid="stMetric"] {
-    border: 1px solid #d7e0ec;
-    border-radius: 15px;
-    padding: .7rem .8rem;
-    background: linear-gradient(145deg, #ffffff 0%, #eef4ff 100%);
-    box-shadow: 0 5px 16px rgba(15,23,42,.055);
-}
-[data-testid="stMetricLabel"] {
-    color: #64748b !important;
-}
-[data-testid="stMetricValue"] {
-    color: #172554 !important;
-}
+/* ---------- Buttons ---------- */
 .stButton > button {
     border-radius: 10px;
     font-weight: 750;
-    border: 1px solid #c7d2fe;
+    border: 1px solid #5269d9;
     background: linear-gradient(135deg, #2563eb, #4f46e5);
-    color: white;
-    box-shadow: 0 5px 14px rgba(37,99,235,.18);
+    color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(37,99,235,.25);
 }
+
 .stButton > button:hover {
     border-color: #93c5fd;
-    box-shadow: 0 7px 18px rgba(37,99,235,.26);
+    box-shadow: 0 8px 22px rgba(37,99,235,.35);
 }
-[data-testid="stDataFrame"] {
-    border: 1px solid #dbe3ef;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 14px rgba(15,23,42,.04);
-}
+
+/* ---------- Inputs ---------- */
 div[data-baseweb="select"] > div,
 div[data-baseweb="input"] > div {
     border-radius: 10px;
-    border-color: #cbd5e1;
-    background: #ffffff;
+    border: 1px solid #334b6e;
+    background: #101e32;
+    color: #f8fafc;
 }
+
+div[data-baseweb="select"] *,
+div[data-baseweb="input"] * {
+    color: #f8fafc !important;
+}
+
 div[data-baseweb="select"] > div:focus-within,
 div[data-baseweb="input"] > div:focus-within {
     border-color: #6366f1;
     box-shadow: 0 0 0 1px #6366f1;
 }
 
-/* Alerts / status panels get a little more depth */
+/* ---------- Dataframes ---------- */
+[data-testid="stDataFrame"] {
+    border: 1px solid #2c4263;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,.25);
+}
+
+/* ---------- Alerts ---------- */
 div[data-testid="stAlert"] {
     border-radius: 12px;
 }
 
-/* Hide Streamlit chrome */
-#MainMenu {visibility:hidden;}
-footer {visibility:hidden;}
+div[data-testid="stAlert"] p,
+div[data-testid="stAlert"] span,
+div[data-testid="stAlert"] div {
+    color: #000000 !important;
+}
+
+/* ---------- Expanders ---------- */
+[data-testid="stExpander"] {
+    background: #0e1b2e;
+    border: 1px solid #2c4263;
+    border-radius: 12px;
+}
+
+[data-testid="stExpander"] summary {
+    color: #f8fafc !important;
+}
+
+/* ---------- Tables / code ---------- */
+table {
+    background: #0e1b2e !important;
+    color: #e5edf8 !important;
+}
+
+code {
+    background: #111d31 !important;
+    color: #dbeafe !important;
+}
+
+hr {
+    border-color: #263a58 !important;
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 768px) {
+    .block-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        padding-top: .8rem;
+    }
+
+    [data-testid="stMetric"] {
+        padding: .65rem;
+        border-radius: 12px;
+    }
+
+    [data-testid="stMetricValue"] {
+        font-size: 1.5rem !important;
+    }
+
+    h1 {
+        font-size: 1.7rem !important;
+    }
+
+    h2 {
+        font-size: 1.4rem !important;
+    }
+
+    h3 {
+        font-size: 1.15rem !important;
+    }
+}
+
+#MainMenu {
+    visibility: hidden;
+}
+
+footer {
+    visibility: hidden;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -1510,14 +1564,71 @@ if active_section == "🏠 Overview":
 
     st.markdown("### Policy posture")
     p1, p2, p3 = st.columns(3)
+
     with p1:
-        st.success("🟢 LOW RISK → RELEASE")
+        st.markdown(
+            """
+            <div style="
+                background:#9BE7B1;
+                border-radius:12px;
+                padding:16px;
+                text-align:center;
+                border:1px solid #65c987;
+            ">
+                <div style="font-size:1.05rem;font-weight:800;color:#000;">
+                    🟢 LOW RISK
+                </div>
+                <div style="font-size:.95rem;font-weight:700;color:#000;margin-top:4px;">
+                    RELEASE
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         st.caption("Risk < 0.30")
+
     with p2:
-        st.warning("🟡 MEDIUM RISK → VERIFY")
+        st.markdown(
+            """
+            <div style="
+                background:#F7DF63;
+                border-radius:12px;
+                padding:16px;
+                text-align:center;
+                border:1px solid #d7bd32;
+            ">
+                <div style="font-size:1.05rem;font-weight:800;color:#000;">
+                    🟡 MEDIUM RISK
+                </div>
+                <div style="font-size:.95rem;font-weight:700;color:#000;margin-top:4px;">
+                    VERIFY
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         st.caption("0.30 ≤ risk < 0.70")
+
     with p3:
-        st.error("🔴 HIGH RISK → BLOCK")
+        st.markdown(
+            """
+            <div style="
+                background:#E88B9B;
+                border-radius:12px;
+                padding:16px;
+                text-align:center;
+                border:1px solid #d66b7c;
+            ">
+                <div style="font-size:1.05rem;font-weight:800;color:#000;">
+                    🔴 HIGH RISK
+                </div>
+                <div style="font-size:.95rem;font-weight:700;color:#000;margin-top:4px;">
+                    BLOCK
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         st.caption("Risk ≥ 0.70")
 
 elif active_section == "⚡ Live Bonus Claim":
