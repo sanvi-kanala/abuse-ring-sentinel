@@ -8,6 +8,20 @@ Built for the **Razorpay AI Buildathon 2026 — Track 2: AI Risk Manager**.
 
 ---
 
+# Abuse-Ring Sentinel
+
+[Your existing project description]
+
+## 🚀 Live Demo
+
+👉 [Open Live Dashboard](YOUR_STREAMLIT_URL)
+
+🔗 [Backend API](YOUR_RENDER_URL/docs)
+
+---
+
+[rest of your existing README]
+
 ## 🚨 The problem
 
 Referral programs can leak money when one operator creates or controls many identities, connects them through referrals, reuses devices/IPs/payment instruments, claims bonuses, and disappears.
