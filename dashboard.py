@@ -45,16 +45,16 @@ st.markdown("""
    ============================================================ */
 
 .stApp {
-    background: linear-gradient(180deg, #d7e7f4 0%, #e4f0f8 52%, #dbeaf6 100%) !important;
+    background: linear-gradient(180deg, #aebfce 0%, #b8cad8 52%, #b1c4d3 100%) !important;
     color: #15263d !important;
 }
 
 [data-testid="stAppViewContainer"] {
-    background: linear-gradient(180deg, #d7e7f4 0%, #e4f0f8 52%, #dbeaf6 100%) !important;
+    background: linear-gradient(180deg, #aebfce 0%, #b8cad8 52%, #b1c4d3 100%) !important;
 }
 
 [data-testid="stHeader"] {
-    background: rgba(215,231,244,.96) !important;
+    background: rgba(174,191,206,.97) !important;
 }
 
 .block-container {
@@ -158,7 +158,7 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
    ============================================================ */
 
 .hero {
-    background: linear-gradient(135deg, #eaf4fc 0%, #dcecf8 100%) !important;
+    background: linear-gradient(135deg, #d7e4ed 0%, #c7d6e1 100%) !important;
     border: 1px solid #aec7df;
     border-radius: 20px;
     padding: 1.25rem 1.35rem;
@@ -192,7 +192,7 @@ div[style*="border-radius:18px"] div {
    ============================================================ */
 
 [data-testid="stMetric"] {
-    background: #eaf3fa !important;
+    background: #e8f0f5 !important;
     border: 1px solid #b9cede;
     border-radius: 15px;
     padding: .8rem .9rem;
@@ -219,7 +219,7 @@ div[data-baseweb="select"] > div,
 div[data-baseweb="input"] > div,
 .stTextInput input,
 .stNumberInput input {
-    background: #f7fbfe !important;
+    background: #f3f7fa !important;
     color: #172b43 !important;
     border: 1px solid #aebfd1 !important;
     border-radius: 10px !important;
@@ -246,7 +246,7 @@ div[data-baseweb="input"] > div:focus-within {
 }
 
 div[role="listbox"] {
-    background: #f7fbfe !important;
+    background: #f3f7fa !important;
 }
 
 div[role="option"] {
@@ -297,7 +297,7 @@ div[role="alert"] *,
 [data-testid="stAlert"]:has([data-testid="stNotificationIcon-info"]),
 .stAlert:has([data-testid="stNotificationIcon-info"]),
 div[role="alert"]:has([data-testid="stNotificationIcon-info"]) {
-    background: #dcecff !important;
+    background: #d9e8f2 !important;
     border: 1px solid #a9c8ed !important;
 }
 
@@ -311,7 +311,7 @@ div[role="alert"]:has([data-testid="stNotificationIcon-info"]) * {
 [data-testid="stAlert"]:has([data-testid="stNotificationIcon-success"]),
 .stAlert:has([data-testid="stNotificationIcon-success"]),
 div[role="alert"]:has([data-testid="stNotificationIcon-success"]) {
-    background: #d9f3e5 !important;
+    background: #d5eadf !important;
     border: 1px solid #9ed8b8 !important;
 }
 
@@ -325,7 +325,7 @@ div[role="alert"]:has([data-testid="stNotificationIcon-success"]) * {
 [data-testid="stAlert"]:has([data-testid="stNotificationIcon-warning"]),
 .stAlert:has([data-testid="stNotificationIcon-warning"]),
 div[role="alert"]:has([data-testid="stNotificationIcon-warning"]) {
-    background: #fff0bd !important;
+    background: #eee1b4 !important;
     border: 1px solid #e3c968 !important;
 }
 
@@ -339,7 +339,7 @@ div[role="alert"]:has([data-testid="stNotificationIcon-warning"]) * {
 [data-testid="stAlert"]:has([data-testid="stNotificationIcon-error"]),
 .stAlert:has([data-testid="stNotificationIcon-error"]),
 div[role="alert"]:has([data-testid="stNotificationIcon-error"]) {
-    background: #ffdfe3 !important;
+    background: #efd1d5 !important;
     border: 1px solid #e5a9b2 !important;
 }
 
@@ -354,7 +354,7 @@ div[role="alert"]:has([data-testid="stNotificationIcon-error"]) * {
    ============================================================ */
 
 [data-testid="stDataFrame"] {
-    background: #f7fbfe;
+    background: #f3f7fa;
     border: 1px solid #b9cede;
     border-radius: 12px;
     overflow: hidden;
@@ -366,7 +366,7 @@ div[role="alert"]:has([data-testid="stNotificationIcon-error"]) * {
    ============================================================ */
 
 [data-testid="stExpander"] {
-    background: #eaf3fa !important;
+    background: #e8f0f5 !important;
     border: 1px solid #b9cede;
     border-radius: 12px;
 }
@@ -407,10 +407,10 @@ hr {
 
 /* Inline cards that may have inherited dark styling:
    force their text to match their light surfaces. */
-div[style*="background:#eef7ff"] *,
-div[style*="background:linear-gradient(135deg,#eef7ff"] *,
-div[style*="background:linear-gradient(135deg,#f7f1ff"] *,
-div[style*="background:linear-gradient(135deg,#f1fbf6"] * {
+div[style*="background:#e4edf3"] *,
+div[style*="background:linear-gradient(135deg,#e4edf3"] *,
+div[style*="background:linear-gradient(135deg,#e8e3ee"] *,
+div[style*="background:linear-gradient(135deg,#e1eee7"] * {
     color: #172b43 !important;
 }
 
@@ -419,6 +419,31 @@ div[style*="background:#9BE7B1"] *,
 div[style*="background:#F7DF63"] *,
 div[style*="background:#E88B9B"] * {
     color: #000000 !important;
+}
+
+/* ============================================================
+   DISTINCT CONTENT CARDS
+   Main background stays slate-blue; content blocks stay lighter.
+   ============================================================ */
+
+[data-testid="stVerticalBlockBorderWrapper"] {
+    border-color: #c0d0dc !important;
+}
+
+[data-testid="stHorizontalBlock"] {
+    gap: 1rem;
+}
+
+/* Keep common bordered containers visibly lighter than page */
+div[data-testid="stVerticalBlockBorderWrapper"] > div {
+    background: #e8f0f5;
+    border-radius: 14px;
+}
+
+/* Progress bars */
+div[data-testid="stProgress"] {
+    background: #d7e1e9 !important;
+    border-radius: 999px;
 }
 
 /* ============================================================
@@ -1815,7 +1840,7 @@ if active_section == "🏠 Overview":
 elif active_section == "⚡ Live Bonus Claim":
     st.markdown(
         """
-        <div style="background:linear-gradient(135deg,#eef7ff,#e6f2ff);border:1px solid #bfdbfe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+        <div style="background:linear-gradient(135deg,#e4edf3,#e6f2ff);border:1px solid #bfdbfe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
           <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">⚡ Live Bonus Claim</div>
           <div style="color:#475569;margin-top:4px;">Claim-level analysis • evaluate one referral-bonus claim using immediate evidence.</div>
         </div>
@@ -1931,7 +1956,7 @@ elif active_section == "⚡ Live Bonus Claim":
 elif active_section == "🔗 Cluster Analysis":
     st.markdown(
         """
-        <div style="background:linear-gradient(135deg,#f7f1ff,#f1e9ff);border:1px solid #d8b4fe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+        <div style="background:linear-gradient(135deg,#e8e3ee,#f1e9ff);border:1px solid #d8b4fe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
           <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">🔗 Fraud Cluster Analysis</div>
           <div style="color:#475569;margin-top:4px;">Cluster-level analysis • inspect connected accounts, model evidence, policy and AI explanation.</div>
         </div>
@@ -2366,7 +2391,7 @@ elif active_section == "🔗 Cluster Analysis":
 elif active_section == "🗃️ Data & Referral Graph":
     st.markdown(
         """
-        <div style="background:linear-gradient(135deg,#f1fbf6,#eaf8f1);border:1px solid #bbf7d0;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+        <div style="background:linear-gradient(135deg,#e1eee7,#eaf8f1);border:1px solid #bbf7d0;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
           <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">🗃️ Data & Referral Graph</div>
           <div style="color:#475569;margin-top:4px;">Evidence workspace • inspect datasets, Razorpay test events and the referral network.</div>
         </div>
