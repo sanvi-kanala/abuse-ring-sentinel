@@ -2,9 +2,13 @@
 import json
 import os
 from datetime import datetime
+from pathlib import Path
 import urllib.error
 import urllib.request
 import urllib.parse
+import subprocess
+import socket
+import time
 
 import pandas as pd
 import plotly.express as px
@@ -22,117 +26,224 @@ except ImportError:
 load_dotenv()
 
 
-# ============================================================
-# CONFIG
-# ============================================================
 
+# ============================================================
+# PAGE CONFIG + POLISHED UI
+# ============================================================
 st.set_page_config(
     page_title="Abuse-Ring Sentinel",
     page_icon="🛡️",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
-
-# ============================================================
-# MODERN TWO-PANEL UI
-# ============================================================
 
 st.markdown("""
 <style>
-/* Keep the two major workflows visually separate.
-   Streamlit exposes the container key as a stable CSS class. */
-.st-key-live_claim_panel {
-    background: linear-gradient(180deg, #eef8ff 0%, #f7fbff 100%);
-    border: 1px solid #b9ddff;
-    border-radius: 18px;
-    padding: 1.15rem 1.15rem 1.35rem 1.15rem;
-    box-shadow: 0 6px 20px rgba(30, 100, 180, 0.08);
-    min-height: 100%;
+/* ---------- Global canvas ---------- */
+.stApp {
+    background:
+        radial-gradient(circle at 8% 0%, rgba(37,99,235,.12), transparent 28%),
+        radial-gradient(circle at 92% 8%, rgba(124,58,237,.10), transparent 26%),
+        #f4f7fb;
+}
+.block-container {
+    padding-top: 1.35rem;
+    padding-bottom: 2rem;
+    max-width: 1500px;
 }
 
-.st-key-cluster_analysis_panel {
-    background: linear-gradient(180deg, #f6f0ff 0%, #fbf9ff 100%);
-    border: 1px solid #d9c4ff;
-    border-radius: 18px;
-    padding: 1.15rem 1.15rem 1.35rem 1.15rem;
-    box-shadow: 0 6px 20px rgba(110, 70, 180, 0.08);
-    min-height: 100%;
+/* ---------- Sidebar ---------- */
+section[data-testid="stSidebar"] {
+    background:
+        radial-gradient(circle at 20% 8%, rgba(59,130,246,.22), transparent 25%),
+        radial-gradient(circle at 90% 42%, rgba(124,58,237,.18), transparent 28%),
+        linear-gradient(180deg, #0b1630 0%, #111c3a 48%, #15112f 100%);
+    border-right: 1px solid #27385f;
+    box-shadow: 8px 0 30px rgba(15,23,42,.12);
 }
-
-.st-key-live_claim_panel h2,
-.st-key-cluster_analysis_panel h2 {
-    margin-top: 0;
+section[data-testid="stSidebar"] > div {
+    padding-top: 1.15rem;
 }
-
-.st-key-live_claim_panel [data-testid="stMetric"],
-.st-key-cluster_analysis_panel [data-testid="stMetric"] {
-    background: rgba(255,255,255,0.72);
+section[data-testid="stSidebar"] * {
+    color: #e8eefc;
+}
+.sentinel-brand {
+    padding: .65rem .7rem 1rem .7rem;
+    margin-bottom: .3rem;
+    border-radius: 15px;
+    background: linear-gradient(135deg, rgba(37,99,235,.25), rgba(124,58,237,.18));
+    border: 1px solid rgba(147,197,253,.18);
+    box-shadow: 0 8px 24px rgba(2,6,23,.20);
+}
+.brand-title {
+    font-size: 1.38rem;
+    font-weight: 850;
+    letter-spacing: -.025em;
+    color: #ffffff !important;
+}
+.brand-sub {
+    color: #a9b9d8 !important;
+    font-size: .78rem;
+    margin-top: .2rem;
+}
+.nav-caption {
+    color: #7f9bc8 !important;
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .11em;
+    font-weight: 850;
+    margin: .7rem 0 .45rem .25rem;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label {
     border-radius: 12px;
-    padding: 0.55rem;
+    padding: .62rem .72rem;
+    margin-bottom: .18rem;
+    border: 1px solid transparent;
+    background: rgba(255,255,255,.025);
+    transition: all .16s ease;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
+    background: linear-gradient(90deg, rgba(59,130,246,.16), rgba(99,102,241,.08));
+    border-color: rgba(125,211,252,.18);
+    transform: translateX(2px);
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
+    background: linear-gradient(100deg, #2563eb 0%, #4f46e5 58%, #6366f1 100%);
+    border: 1px solid rgba(191,219,254,.38);
+    box-shadow:
+        inset 3px 0 0 #bfdbfe,
+        0 8px 22px rgba(37,99,235,.25);
+    transform: translateX(2px);
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) p {
+    color: #ffffff !important;
+    font-weight: 800;
+}
+section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
+    color: #cbd8ef !important;
+}
+section[data-testid="stSidebar"] hr {
+    border-color: #304263;
+}
+section[data-testid="stSidebar"] .stCaption {
+    color: #8fa5cc !important;
 }
 
-/* Larger top-level workspace navigation */
-[data-testid="stRadio"] > div[role="radiogroup"] {
-    gap: 14px !important;
-    width: 100%;
+/* ---------- Header ---------- */
+.hero {
+    border: 1px solid #cbd8ea;
+    border-radius: 20px;
+    padding: 1.25rem 1.35rem;
+    background:
+        linear-gradient(135deg, #0f1b33 0%, #172554 48%, #312e81 100%);
+    box-shadow: 0 12px 34px rgba(30,41,59,.16);
+    margin-bottom: 1.15rem;
+    position: relative;
+    overflow: hidden;
+}
+.hero:after {
+    content: "";
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    right: -90px;
+    top: -150px;
+    border-radius: 50%;
+    background: rgba(96,165,250,.18);
+}
+.hero-title {
+    font-size: 2rem;
+    font-weight: 850;
+    letter-spacing: -.04em;
+    color: #f8fafc !important;
+}
+.hero-sub {
+    color: #cbd5e1 !important;
+    margin-top: .22rem;
+    font-size: .96rem;
+}
+.status-chip {
+    display: inline-block;
+    padding: .3rem .62rem;
+    border-radius: 999px;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.14);
+    color: #e2e8f0 !important;
+    font-size: .71rem;
+    font-weight: 750;
+    margin-right: .35rem;
 }
 
-[data-testid="stRadio"] > div[role="radiogroup"] > label {
-    flex: 1 1 0 !important;
-    min-height: 82px !important;
-    padding: 18px 22px !important;
-    border: 1px solid #d7dce5 !important;
-    border-radius: 16px !important;
-    background: #ffffff !important;
-    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.06) !important;
-    transition: all 0.15s ease-in-out;
+/* ---------- Main content ---------- */
+h1, h2, h3, h4 {
+    color: #0f172a;
+}
+[data-testid="stMetric"] {
+    border: 1px solid #d7e0ec;
+    border-radius: 15px;
+    padding: .7rem .8rem;
+    background: linear-gradient(145deg, #ffffff 0%, #eef4ff 100%);
+    box-shadow: 0 5px 16px rgba(15,23,42,.055);
+}
+[data-testid="stMetricLabel"] {
+    color: #64748b !important;
+}
+[data-testid="stMetricValue"] {
+    color: #172554 !important;
+}
+.stButton > button {
+    border-radius: 10px;
+    font-weight: 750;
+    border: 1px solid #c7d2fe;
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    color: white;
+    box-shadow: 0 5px 14px rgba(37,99,235,.18);
+}
+.stButton > button:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 7px 18px rgba(37,99,235,.26);
+}
+[data-testid="stDataFrame"] {
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(15,23,42,.04);
+}
+div[data-baseweb="select"] > div,
+div[data-baseweb="input"] > div {
+    border-radius: 10px;
+    border-color: #cbd5e1;
+    background: #ffffff;
+}
+div[data-baseweb="select"] > div:focus-within,
+div[data-baseweb="input"] > div:focus-within {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 1px #6366f1;
 }
 
-[data-testid="stRadio"] > div[role="radiogroup"] > label:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.10) !important;
-    border-color: #aeb8c8 !important;
+/* Alerts / status panels get a little more depth */
+div[data-testid="stAlert"] {
+    border-radius: 12px;
 }
 
-[data-testid="stRadio"] > div[role="radiogroup"] > label p {
-    font-size: 1.12rem !important;
-    font-weight: 750 !important;
-    line-height: 1.3 !important;
-    margin: 0 !important;
-}
-
-[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) {
-    border: 2px solid #2563eb !important;
-    background: linear-gradient(135deg, #eff6ff, #ffffff) !important;
-    box-shadow: 0 7px 20px rgba(37, 99, 235, 0.14) !important;
-}
-
-[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) p {
-    color: #1d4ed8 !important;
-}
-
-@media (max-width: 900px) {
-    [data-testid="stRadio"] > div[role="radiogroup"] {
-        flex-direction: column !important;
-    }
-    [data-testid="stRadio"] > div[role="radiogroup"] > label {
-        width: 100% !important;
-    }
-}
-
+/* Hide Streamlit chrome */
+#MainMenu {visibility:hidden;}
+footer {visibility:hidden;}
 </style>
 """, unsafe_allow_html=True)
 
+PROJECT_ROOT = Path(__file__).resolve().parent
 
-FEATURES_PATH = "data/cluster_features.csv"
-SCORES_PATH = "reports/cluster_risk_scores.csv"
-METRICS_PATH = "reports/metrics.json"
-LEDGER_PATH = "reports/bonus_ledger_demo.jsonl"
-AUDIT_PATH = "reports/audit_log.jsonl"
-USERS_PATH = "data/users.csv"
-REFERRALS_PATH = "data/referrals.csv"
-PAYMENTS_PATH = "data/payments.csv"
-WEBHOOK_EVENTS_PATH = "reports/webhook_events.jsonl"
-MAPPING_PATH = "data/razorpay_cluster_mapping.json"
+FEATURES_PATH = str(PROJECT_ROOT / "data/cluster_features.csv")
+SCORES_PATH = str(PROJECT_ROOT / "reports/cluster_risk_scores.csv")
+METRICS_PATH = str(PROJECT_ROOT / "reports/metrics.json")
+LEDGER_PATH = str(PROJECT_ROOT / "reports/bonus_ledger_demo.jsonl")
+AUDIT_PATH = str(PROJECT_ROOT / "reports/audit_log.jsonl")
+USERS_PATH = str(PROJECT_ROOT / "data/users.csv")
+REFERRALS_PATH = str(PROJECT_ROOT / "data/referrals.csv")
+PAYMENTS_PATH = str(PROJECT_ROOT / "data/payments.csv")
+WEBHOOK_EVENTS_PATH = str(PROJECT_ROOT / "reports/webhook_events.jsonl")
+MAPPING_PATH = str(PROJECT_ROOT / "data/razorpay_cluster_mapping.json")
 
 
 # ============================================================
@@ -858,6 +969,65 @@ SENTINEL_API_URL = os.getenv(
 ).rstrip("/")
 
 
+def _sentinel_port_open():
+    """Return True when the local Sentinel API port is accepting connections."""
+    try:
+        parsed = urllib.parse.urlparse(SENTINEL_API_URL)
+        host = parsed.hostname or "127.0.0.1"
+        port = parsed.port or 8000
+        with socket.create_connection((host, port), timeout=0.7):
+            return True
+    except Exception:
+        return False
+
+
+def _ensure_sentinel_api():
+    """Start the local FastAPI server if the dashboard cannot reach it."""
+    if _sentinel_port_open():
+        return True, None
+
+    project_root = Path(__file__).resolve().parent
+    app_module = "src.api.main:app"
+
+    try:
+        creationflags = 0
+        if os.name == "nt":
+            creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+
+        subprocess.Popen(
+            [
+                os.environ.get("PYTHON", "python"),
+                "-m",
+                "uvicorn",
+                app_module,
+                "--port",
+                "8000",
+            ],
+            cwd=str(project_root),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=creationflags,
+        )
+    except Exception as exc:
+        return False, (
+            "Sentinel API is not running and could not be started automatically. "
+            f"Start it manually with: python -m uvicorn {app_module} --port 8000. "
+            f"Details: {exc}"
+        )
+
+    # Give Uvicorn a few seconds to import the app and bind the port.
+    for _ in range(30):
+        if _sentinel_port_open():
+            return True, None
+        time.sleep(0.2)
+
+    return False, (
+        "Sentinel API did not become available on port 8000. "
+        "Run `python -m uvicorn src.api.main:app --port 8000` in the project folder "
+        "and reload the dashboard."
+    )
+
+
 def submit_bonus_claim(user_id, referrer_id, bonus_amount, payment_id=""):
     """Call the real local FastAPI claim endpoint."""
     payload = {
@@ -880,7 +1050,11 @@ def submit_bonus_claim(user_id, referrer_id, bonus_amount, payment_id=""):
     )
 
     try:
-        with urllib.request.urlopen(request, timeout=10) as response:
+        api_ready, startup_error = _ensure_sentinel_api()
+        if not api_ready:
+            return None, startup_error
+
+        with urllib.request.urlopen(request, timeout=20) as response:
             return normalize_claim_result(json.loads(response.read().decode("utf-8"))), None
     except urllib.error.HTTPError as exc:
         try:
@@ -937,6 +1111,10 @@ def resolve_held_claim(claim_id):
     )
 
     try:
+        api_ready, startup_error = _ensure_sentinel_api()
+        if not api_ready:
+            return None, startup_error
+
         with urllib.request.urlopen(request, timeout=30) as response:
             data = json.loads(response.read().decode("utf-8"))
             return normalize_claim_result(data), None
@@ -1182,272 +1360,145 @@ ledger = load_jsonl(LEDGER_PATH)
 audit = load_jsonl(AUDIT_PATH)
 referral_graph, graph_cluster_map = build_referral_graph(users)
 
+# ============================================================
+# DERIVED VALUES (AVAILABLE TO EVERY WORKSPACE)
+# ============================================================
+default_metrics = metrics.get("metrics_at_default_threshold", {}) or {}
+precision = float(default_metrics.get("precision", 0) or 0)
+recall = float(default_metrics.get("recall", 0) or 0)
+f1 = float(default_metrics.get("f1", 0) or 0)
+roc_auc = float(default_metrics.get("roc_auc", 0) or 0)
+
+released = blocked = 0
+released_money = blocked_money = 0.0
+
+if not scores.empty:
+    _exposure = scores.copy()
+    _exposure["cluster_id"] = _exposure["cluster_id"].astype(str)
+    if not features.empty and "total_bonus_claimed" in features.columns:
+        _bonus = features[["cluster_id", "total_bonus_claimed"]].copy()
+        _bonus["cluster_id"] = _bonus["cluster_id"].astype(str)
+        _exposure = _exposure.merge(_bonus, on="cluster_id", how="left")
+    if "total_bonus_claimed" not in _exposure.columns:
+        _exposure["total_bonus_claimed"] = 0.0
+    _exposure["total_bonus_claimed"] = pd.to_numeric(
+        _exposure["total_bonus_claimed"], errors="coerce"
+    ).fillna(0)
+    _exposure["risk_score"] = pd.to_numeric(
+        _exposure["risk_score"], errors="coerce"
+    ).fillna(0)
+    _release_mask = _exposure["risk_score"] < 0.30
+    _block_mask = _exposure["risk_score"] >= 0.70
+    released = int(_release_mask.sum())
+    blocked = int(_block_mask.sum())
+    released_money = float(_exposure.loc[_release_mask, "total_bonus_claimed"].sum())
+    blocked_money = float(_exposure.loc[_block_mask, "total_bonus_claimed"].sum())
+
 
 # ============================================================
 # HEADER
 # ============================================================
+st.markdown("""
+<div class="hero">
+  <div class="hero-title">🛡️ Abuse-Ring Sentinel</div>
+  <div class="hero-sub">Autonomous referral-bonus fraud protection • defense-only AI risk manager</div>
+  <div style="margin-top:.7rem">
+    <span class="status-chip">● ONLINE</span>
+    <span class="status-chip">⚡ AUTONOMOUS</span>
+    <span class="status-chip">🧪 RAZORPAY TEST MODE</span>
+    <span class="status-chip">NO REAL PAYOUTS</span>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
-st.title("🛡️ Abuse-Ring Sentinel")
-
-st.subheader(
-    "Autonomous Referral-Bonus Fraud Protection"
-)
-
-st.caption(
-    "Defense-only AI risk manager • Razorpay Test Mode • "
-    "Autonomous decisioning"
-)
-
-
-# ============================================================
-# STATUS
-# ============================================================
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.success("● SENTINEL ONLINE")
-
-with col2:
-    st.info("⚡ AUTONOMOUS MODE")
-
-with col3:
-    st.warning("TEST MODE — NO REAL PAYOUTS")
-
-
-st.divider()
-
-# ============================================================
-# TOP-LEVEL SECTION NAVIGATION
-# ============================================================
-
-st.markdown(
-    """
-    <div style="margin: 0.25rem 0 0.8rem 0;">
-      <div style="font-size:0.82rem;color:#6b7280;margin-bottom:0.35rem;">Choose a workspace</div>
+with st.sidebar:
+    st.markdown("""
+    <div class="sentinel-brand">
+      <div class="brand-title">🛡️ Sentinel</div>
+      <div class="brand-sub">Risk operations console</div>
     </div>
-    """,
-    unsafe_allow_html=True,
-)
+    <div class="nav-caption">Workspaces</div>
+    """, unsafe_allow_html=True)
 
-active_section = st.radio(
-    "Dashboard section",
-    [
-        "🗃️ Data & Graph",
-        "⚡ Bonus Claim",
-        "🔗 Cluster Analysis",
-    ],
-    horizontal=True,
-    label_visibility="collapsed",
-    key="top_level_dashboard_section",
-)
-
-st.divider()
-
-if active_section == "🗃️ Data & Graph":
-    st.markdown(
-        """
-        <div style="background:linear-gradient(135deg,#f1fbf6,#eaf8f1);border:1px solid #bbf7d0;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
-          <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">🗃️ Data & Referral Graph</div>
-          <div style="color:#475569;margin-top:4px;">Evidence workspace • inspect datasets, Razorpay test events and the referral network.</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    active_section = st.radio(
+        "Navigation",
+        [
+            "🏠 Overview",
+            "⚡ Live Bonus Claim",
+            "🔗 Cluster Analysis",
+            "🗃️ Data & Referral Graph",
+            "🧠 Autonomous Policy",
+            "📊 Model Performance",
+            "📈 Risk Distribution",
+            "🔗 Ring Signals",
+            "📜 Audit Trail",
+            "💰 Bonus Protection",
+        ],
+        label_visibility="collapsed",
+        key="sentinel_workspace_navigation",
     )
-    st.header("🗃️ Evidence Data")
-    st.caption(
-        "Everything below is read from the project's generated datasets and "
-        "Razorpay Test Mode event log — not invented dashboard values."
-    )
+    st.markdown("---")
+    st.markdown("""
+    <div style="
+        padding:.7rem .75rem;
+        border-radius:12px;
+        background:rgba(15,23,42,.28);
+        border:1px solid rgba(148,163,184,.15);
+        margin-top:.3rem;">
+      <div style="font-size:.72rem;color:#93c5fd;font-weight:800;">SYSTEM STATUS</div>
+      <div style="font-size:.76rem;color:#b7c5df;margin-top:.3rem;">● Policy 1.1-autonomous</div>
+      <div style="font-size:.76rem;color:#b7c5df;">● Defense-only • Test Mode</div>
+      <div style="font-size:.76rem;color:#b7c5df;">● Users: {len(users):,} • Clusters: {len(features):,}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # Dataset counts
-    count_cols = st.columns(5)
+# ============================================================
+# OVERVIEW
+# ============================================================
+if active_section == "🏠 Overview":
+    st.subheader("Command Center")
+    st.caption("Detection quality, protected bonus exposure and autonomous decisioning at a glance.")
 
-    data_counts = [
-        ("Users", len(users)),
-        ("Referral edges", len(referrals)),
-        ("Payments", len(payments)),
-        ("Clusters", len(features)),
-        ("Test-set rows", int(metrics.get("metrics_at_default_threshold", {}).get("test_set_size", 0))),
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("Users observed", f"{len(users):,}")
+    k2.metric("Referral clusters", f"{len(features):,}")
+    k3.metric("High-risk clusters", f"{blocked:,}")
+    k4.metric("Bonus exposure blocked", money(blocked_money))
+
+    st.markdown("### Autonomous decision flow")
+    f1c, f2c, f3c, f4c = st.columns(4)
+    flow = [
+        ("01", "Claim arrives", "Capture user, referrer and claim-time signals."),
+        ("02", "Risk score", "Score coordinated-abuse evidence."),
+        ("03", "Policy action", "Approve, verify or reject autonomously."),
+        ("04", "Observation", "Resolve held claims using later behaviour."),
     ]
-
-    for col, (label, count) in zip(count_cols, data_counts):
+    for col, (num, title, desc) in zip([f1c, f2c, f3c, f4c], flow):
         with col:
-            st.metric(label, f"{count:,}")
+            st.markdown(f"**{num} · {title}**")
+            st.caption(desc)
 
-    # Two useful tabs: actual transaction records + raw referral evidence.
-    data_tab, tx_tab, graph_tab = st.tabs([
-        "📦 Dataset",
-        "💳 Test Transactions",
-        "🕸️ Referral Graph",
-    ])
+    st.markdown("### Held-out model performance")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Precision", f"{precision:.3f}")
+    m2.metric("Recall", f"{recall:.3f}")
+    m3.metric("F1", f"{f1:.3f}")
+    m4.metric("ROC-AUC", f"{roc_auc:.3f}")
+    st.caption("Metrics are from the held-out synthetic test set.")
 
-    with data_tab:
-        st.markdown("#### Raw generated data")
+    st.markdown("### Policy posture")
+    p1, p2, p3 = st.columns(3)
+    with p1:
+        st.success("🟢 LOW RISK → RELEASE")
+        st.caption("Risk < 0.30")
+    with p2:
+        st.warning("🟡 MEDIUM RISK → VERIFY")
+        st.caption("0.30 ≤ risk < 0.70")
+    with p3:
+        st.error("🔴 HIGH RISK → BLOCK")
+        st.caption("Risk ≥ 0.70")
 
-        dataset_name = st.selectbox(
-            "Choose a dataset to inspect",
-            [
-                "Users",
-                "Referrals",
-                "Payments",
-                "Cluster features",
-                "Risk scores",
-            ],
-            key="dataset_inspector_final",
-        )
-
-        dataset_map = {
-            "Users": users,
-            "Referrals": referrals,
-            "Payments": payments,
-            "Cluster features": features,
-            "Risk scores": scores,
-        }
-
-        inspect_df = dataset_map[dataset_name]
-
-        if not inspect_df.empty:
-            st.dataframe(
-                inspect_df.head(30),
-                use_container_width=True,
-                hide_index=True,
-            )
-            st.caption(
-                f"Showing the first 30 rows of {len(inspect_df):,} total rows."
-            )
-        else:
-            st.warning(f"{dataset_name} is not available.")
-
-    with tx_tab:
-        st.markdown("#### 💳 Payment / bonus transaction evidence")
-
-        if not payments.empty:
-            tx_df = payments.copy()
-
-            # Attach the graph cluster so the transaction can be traced back
-            # to the referral graph.
-            if not users.empty and not graph_cluster_map.empty:
-                cluster_lookup = graph_cluster_map.rename("graph_cluster_id").reset_index()
-                cluster_lookup.columns = ["user_id", "graph_cluster_id"]
-                tx_df = tx_df.merge(cluster_lookup, on="user_id", how="left")
-
-            show_cols = [
-                c for c in [
-                    "payment_id",
-                    "user_id",
-                    "graph_cluster_id",
-                    "instrument_id",
-                    "amount",
-                    "purpose",
-                    "created_ts",
-                    "method",
-                ]
-                if c in tx_df.columns
-            ]
-
-            st.dataframe(
-                tx_df.sort_values("created_ts", ascending=False).head(25)[show_cols],
-                use_container_width=True,
-                hide_index=True,
-            )
-
-            st.caption(
-                "These are the project's synthetic payment/bonus transaction records. "
-                "They are separate from the live Razorpay Test Mode payment used to prove the webhook path."
-            )
-        else:
-            st.warning("data/payments.csv not found.")
-
-        st.markdown("#### 🔴 Razorpay Test Mode events")
-
-        if webhook_events:
-            event_rows = []
-            for event in webhook_events[-20:][::-1]:
-                event_rows.append({
-                    "Event": event.get("event", ""),
-                    "Payment ID": event.get("payment_id", ""),
-                    "Method": event.get("method", ""),
-                    "Received": event.get("received", ""),
-                    "Signature verified": event.get("signature_verified", ""),
-                })
-
-            st.dataframe(
-                pd.DataFrame(event_rows),
-                use_container_width=True,
-                hide_index=True,
-            )
-        else:
-            st.info(
-                "No webhook_events.jsonl found yet. The Razorpay Test Mode webhook "
-                "section will populate after another payment.captured event."
-            )
-
-        if razorpay_mapping:
-            st.caption(
-                f"Merchant-side demo mapping contains {len(razorpay_mapping)} payment → cluster link(s)."
-            )
-
-    with graph_tab:
-        st.markdown("#### 🕸️ Complete referral-network graph")
-        st.caption(
-            "All 6,315 users are shown. Nodes are separated using the dataset's cluster_type: "
-            "FRAUD_RING, FAMILY_FRIEND and ORGANIC_SINGLE. Referral edges come from users.csv. "
-            "Payment activity and model risk are attached to node hover details."
-        )
-
-        fraud_users = int((users.get("cluster_type", pd.Series(dtype=object)) == "FRAUD_RING").sum())
-        friend_users = int((users.get("cluster_type", pd.Series(dtype=object)) == "FAMILY_FRIEND").sum())
-        organic_users = int((users.get("cluster_type", pd.Series(dtype=object)) == "ORGANIC_SINGLE").sum())
-
-        a, b, c, d = st.columns(4)
-        a.metric("All users", f"{len(users):,}")
-        b.metric("🚨 Fraudsters", f"{fraud_users:,}")
-        c.metric("👥 Friends / Family", f"{friend_users:,}")
-        d.metric("👤 Organic", f"{organic_users:,}")
-
-        if not users.empty and referral_graph.number_of_nodes() > 0:
-            global_fig = complete_referral_graph_figure(
-                users, payments, scores, referral_graph
-            )
-            if global_fig is not None:
-                st.plotly_chart(
-                    global_fig,
-                    use_container_width=True,
-                    key="complete_referral_network_graph",
-                )
-
-            st.info(
-                "🚨 Red = fraudsters | 👥 Green = friends/family | 👤 Gray = organic users. "
-                "Hover any node to inspect its cluster, risk score, referrals, payments, "
-                "device, IP, payment instrument and bonus."
-            )
-
-            st.markdown("#### 🔍 Zoom into one cluster")
-            cluster_options = sorted(users["cluster_id"].astype(str).unique().tolist()) if "cluster_id" in users.columns else []
-            if cluster_options:
-                graph_choice = st.selectbox(
-                    "Choose a cluster",
-                    cluster_options,
-                    index=cluster_options.index("comp_1653") if "comp_1653" in cluster_options else 0,
-                    key="graph_cluster_selector",
-                )
-                focused_fig = referral_graph_figure(users, referral_graph, graph_choice)
-                if focused_fig is not None:
-                    st.plotly_chart(focused_fig, use_container_width=True, key="focused_referral_network_graph")
-
-                members = users[users["cluster_id"].astype(str) == str(graph_choice)].copy()
-                if not members.empty:
-                    member_cols = [c for c in [
-                        "user_id", "cluster_type", "referred_by", "device_id", "signup_ip",
-                        "payment_instrument_id", "bonus_amount_claimed", "num_txn_post_signup",
-                        "total_txn_value_post_signup", "active_days_post_signup"
-                    ] if c in members.columns]
-                    st.dataframe(members[member_cols], use_container_width=True, hide_index=True)
-        else:
-            st.info("users.csv / referral data is not available.")
-
-elif active_section == "⚡ Bonus Claim":
+elif active_section == "⚡ Live Bonus Claim":
     st.markdown(
         """
         <div style="background:linear-gradient(135deg,#eef7ff,#e6f2ff);border:1px solid #bfdbfe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
@@ -1561,6 +1612,7 @@ elif active_section == "⚡ Bonus Claim":
             )
 
     st.divider()
+
 
 elif active_section == "🔗 Cluster Analysis":
     st.markdown(
@@ -1997,6 +2049,210 @@ elif active_section == "🔗 Cluster Analysis":
         st.warning("No scored clusters found. Run the pipeline first.")
     st.divider()
 
+elif active_section == "🗃️ Data & Referral Graph":
+    st.markdown(
+        """
+        <div style="background:linear-gradient(135deg,#f1fbf6,#eaf8f1);border:1px solid #bbf7d0;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+          <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">🗃️ Data & Referral Graph</div>
+          <div style="color:#475569;margin-top:4px;">Evidence workspace • inspect datasets, Razorpay test events and the referral network.</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.header("🗃️ Evidence Data")
+    st.caption(
+        "Everything below is read from the project's generated datasets and "
+        "Razorpay Test Mode event log — not invented dashboard values."
+    )
+
+    # Dataset counts
+    count_cols = st.columns(5)
+
+    data_counts = [
+        ("Users", len(users)),
+        ("Referral edges", len(referrals)),
+        ("Payments", len(payments)),
+        ("Clusters", len(features)),
+        ("Test-set rows", int(metrics.get("metrics_at_default_threshold", {}).get("test_set_size", 0))),
+    ]
+
+    for col, (label, count) in zip(count_cols, data_counts):
+        with col:
+            st.metric(label, f"{count:,}")
+
+    # Two useful tabs: actual transaction records + raw referral evidence.
+    data_tab, tx_tab, graph_tab = st.tabs([
+        "📦 Dataset",
+        "💳 Test Transactions",
+        "🕸️ Referral Graph",
+    ])
+
+    with data_tab:
+        st.markdown("#### Raw generated data")
+
+        dataset_name = st.selectbox(
+            "Choose a dataset to inspect",
+            [
+                "Users",
+                "Referrals",
+                "Payments",
+                "Cluster features",
+                "Risk scores",
+            ],
+            key="dataset_inspector_final",
+        )
+
+        dataset_map = {
+            "Users": users,
+            "Referrals": referrals,
+            "Payments": payments,
+            "Cluster features": features,
+            "Risk scores": scores,
+        }
+
+        inspect_df = dataset_map[dataset_name]
+
+        if not inspect_df.empty:
+            st.dataframe(
+                inspect_df.head(30),
+                use_container_width=True,
+                hide_index=True,
+            )
+            st.caption(
+                f"Showing the first 30 rows of {len(inspect_df):,} total rows."
+            )
+        else:
+            st.warning(f"{dataset_name} is not available.")
+
+    with tx_tab:
+        st.markdown("#### 💳 Payment / bonus transaction evidence")
+
+        if not payments.empty:
+            tx_df = payments.copy()
+
+            # Attach the graph cluster so the transaction can be traced back
+            # to the referral graph.
+            if not users.empty and not graph_cluster_map.empty:
+                cluster_lookup = graph_cluster_map.rename("graph_cluster_id").reset_index()
+                cluster_lookup.columns = ["user_id", "graph_cluster_id"]
+                tx_df = tx_df.merge(cluster_lookup, on="user_id", how="left")
+
+            show_cols = [
+                c for c in [
+                    "payment_id",
+                    "user_id",
+                    "graph_cluster_id",
+                    "instrument_id",
+                    "amount",
+                    "purpose",
+                    "created_ts",
+                    "method",
+                ]
+                if c in tx_df.columns
+            ]
+
+            st.dataframe(
+                tx_df.sort_values("created_ts", ascending=False).head(25)[show_cols],
+                use_container_width=True,
+                hide_index=True,
+            )
+
+            st.caption(
+                "These are the project's synthetic payment/bonus transaction records. "
+                "They are separate from the live Razorpay Test Mode payment used to prove the webhook path."
+            )
+        else:
+            st.warning("data/payments.csv not found.")
+
+        st.markdown("#### 🔴 Razorpay Test Mode events")
+
+        if webhook_events:
+            event_rows = []
+            for event in webhook_events[-20:][::-1]:
+                event_rows.append({
+                    "Event": event.get("event", ""),
+                    "Payment ID": event.get("payment_id", ""),
+                    "Method": event.get("method", ""),
+                    "Received": event.get("received", ""),
+                    "Signature verified": event.get("signature_verified", ""),
+                })
+
+            st.dataframe(
+                pd.DataFrame(event_rows),
+                use_container_width=True,
+                hide_index=True,
+            )
+        else:
+            st.info(
+                "No webhook_events.jsonl found yet. The Razorpay Test Mode webhook "
+                "section will populate after another payment.captured event."
+            )
+
+        if razorpay_mapping:
+            st.caption(
+                f"Merchant-side demo mapping contains {len(razorpay_mapping)} payment → cluster link(s)."
+            )
+
+    with graph_tab:
+        st.markdown("#### 🕸️ Complete referral-network graph")
+        st.caption(
+            "All 6,315 users are shown. Nodes are separated using the dataset's cluster_type: "
+            "FRAUD_RING, FAMILY_FRIEND and ORGANIC_SINGLE. Referral edges come from users.csv. "
+            "Payment activity and model risk are attached to node hover details."
+        )
+
+        fraud_users = int((users.get("cluster_type", pd.Series(dtype=object)) == "FRAUD_RING").sum())
+        friend_users = int((users.get("cluster_type", pd.Series(dtype=object)) == "FAMILY_FRIEND").sum())
+        organic_users = int((users.get("cluster_type", pd.Series(dtype=object)) == "ORGANIC_SINGLE").sum())
+
+        a, b, c, d = st.columns(4)
+        a.metric("All users", f"{len(users):,}")
+        b.metric("🚨 Fraudsters", f"{fraud_users:,}")
+        c.metric("👥 Friends / Family", f"{friend_users:,}")
+        d.metric("👤 Organic", f"{organic_users:,}")
+
+        if not users.empty and referral_graph.number_of_nodes() > 0:
+            global_fig = complete_referral_graph_figure(
+                users, payments, scores, referral_graph
+            )
+            if global_fig is not None:
+                st.plotly_chart(
+                    global_fig,
+                    use_container_width=True,
+                    key="complete_referral_network_graph",
+                )
+
+            st.info(
+                "🚨 Red = fraudsters | 👥 Green = friends/family | 👤 Gray = organic users. "
+                "Hover any node to inspect its cluster, risk score, referrals, payments, "
+                "device, IP, payment instrument and bonus."
+            )
+
+            st.markdown("#### 🔍 Zoom into one cluster")
+            cluster_options = sorted(users["cluster_id"].astype(str).unique().tolist()) if "cluster_id" in users.columns else []
+            if cluster_options:
+                graph_choice = st.selectbox(
+                    "Choose a cluster",
+                    cluster_options,
+                    index=cluster_options.index("comp_1653") if "comp_1653" in cluster_options else 0,
+                    key="graph_cluster_selector",
+                )
+                focused_fig = referral_graph_figure(users, referral_graph, graph_choice)
+                if focused_fig is not None:
+                    st.plotly_chart(focused_fig, use_container_width=True, key="focused_referral_network_graph")
+
+                members = users[users["cluster_id"].astype(str) == str(graph_choice)].copy()
+                if not members.empty:
+                    member_cols = [c for c in [
+                        "user_id", "cluster_type", "referred_by", "device_id", "signup_ip",
+                        "payment_instrument_id", "bonus_amount_claimed", "num_txn_post_signup",
+                        "total_txn_value_post_signup", "active_days_post_signup"
+                    ] if c in members.columns]
+                    st.dataframe(members[member_cols], use_container_width=True, hide_index=True)
+        else:
+            st.info("users.csv / referral data is not available.")
+
+elif active_section == "🧠 Autonomous Policy":
     # ============================================================
     # POLICY
     # ============================================================
@@ -2053,6 +2309,8 @@ elif active_section == "🔗 Cluster Analysis":
     st.divider()
 
 
+
+elif active_section == "📊 Model Performance":
     # ============================================================
     # MODEL PERFORMANCE
     # ============================================================
@@ -2090,6 +2348,8 @@ elif active_section == "🔗 Cluster Analysis":
     )
 
 
+
+elif active_section == "📈 Risk Distribution":
     # ============================================================
     # RISK DISTRIBUTION
     # ============================================================
@@ -2125,6 +2385,8 @@ elif active_section == "🔗 Cluster Analysis":
         )
 
 
+
+elif active_section == "🔗 Ring Signals":
     # ============================================================
     # FRAUD-RING SIGNALS
     # ============================================================
@@ -2168,6 +2430,8 @@ elif active_section == "🔗 Cluster Analysis":
                 use_container_width=True,
             )
 
+
+elif active_section == "📜 Audit Trail":
 
     # ============================================================
     # RECENT AUDIT TRAIL
@@ -2226,6 +2490,7 @@ elif active_section == "🔗 Cluster Analysis":
         )
 
 
+elif active_section == "💰 Bonus Protection":
     # ============================================================
     # MONEY MOVEMENT
     # ============================================================
@@ -2255,22 +2520,12 @@ elif active_section == "🔗 Cluster Analysis":
 
         st.caption(
             "Approved bonus payouts are simulated "
-            "because Razorpay credentials are not configured."
+            "because this dashboard is configured for Razorpay Test Mode / dry-run payouts."
         )
 
 
-    # ============================================================
-    # FOOTER
-    # ============================================================
+    st.caption("Approved payouts are simulated in this demo; no real money moves.")
 
-    st.divider()
-
-    st.caption(
-        "Abuse-Ring Sentinel • Policy 1.1-autonomous • "
-        "Defense-only • Razorpay Test Mode"
-    )
-
-    st.caption(
-        "No real payment was blocked or transferred by this demo."
-    )
-
+st.divider()
+st.caption("Abuse-Ring Sentinel • Policy 1.1-autonomous • Defense-only • Razorpay Test Mode")
+st.caption("No real payment was blocked or transferred by this demo.")
