@@ -40,69 +40,70 @@ st.set_page_config(
 st.markdown("""
 <style>
 /* ============================================================
-   ABUSE-RING SENTINEL — LIGHT BLUE / HIGH CONTRAST THEME
-   Distinct navy sidebar + soft blue main workspace.
+   ABUSE-RING SENTINEL — FINAL HIGH-CONTRAST THEME
+   Distinct sidebar + content area, readable text everywhere.
    ============================================================ */
 
 .stApp {
-    background: linear-gradient(180deg, #e5eef5 0%, #f2f7fb 52%, #e9f2f8 100%) !important;
-    color: #15263d !important;
+    background: #eef3f9;
+    color: #172033;
 }
 
 [data-testid="stAppViewContainer"] {
-    background: linear-gradient(180deg, #e5eef5 0%, #f2f7fb 52%, #e9f2f8 100%) !important;
+    background: #eef3f9;
 }
 
 [data-testid="stHeader"] {
-    background: rgba(229,238,245,.97) !important;
+    background: rgba(238,243,249,.96);
 }
 
+/* Main content */
 .block-container {
     max-width: 1450px;
     padding-top: 1.25rem;
     padding-bottom: 2.5rem;
 }
 
-/* ---------- Main text ---------- */
+/* Default text */
 .stApp p,
 .stApp li,
 .stApp label,
 .stApp [data-testid="stMarkdownContainer"] p {
-    color: #20344d;
+    color: #243247;
 }
 
 h1, h2, h3, h4, h5 {
-    color: #14243a !important;
+    color: #172033 !important;
 }
 
 /* ============================================================
-   SIDEBAR — DARKER THAN MAIN CONTENT
+   SIDEBAR — clearly different from the main content
    ============================================================ */
 
 section[data-testid="stSidebar"] {
     background:
-        radial-gradient(circle at 20% 5%, rgba(78,116,220,.22), transparent 28%),
-        linear-gradient(180deg, #172b4b 0%, #1b3155 52%, #202957 100%) !important;
-    border-right: 1px solid #304b70;
-    box-shadow: 7px 0 28px rgba(25,50,80,.20);
+        radial-gradient(circle at 20% 5%, rgba(68,91,210,.22), transparent 28%),
+        linear-gradient(180deg, #111a3a 0%, #121633 55%, #17122e 100%);
+    border-right: 1px solid #27345e;
+    box-shadow: 7px 0 28px rgba(23,32,51,.18);
 }
 
 section[data-testid="stSidebar"] > div {
-    background: transparent !important;
+    background: transparent;
     padding-top: 1.1rem;
 }
 
 section[data-testid="stSidebar"] * {
-    color: #edf5ff;
+    color: #e9efff;
 }
 
 .sentinel-brand {
     padding: .8rem .75rem 1rem;
     margin-bottom: .45rem;
     border-radius: 15px;
-    background: linear-gradient(135deg, #263f70, #303b78) !important;
-    border: 1px solid #5876a8;
-    box-shadow: 0 8px 24px rgba(0,0,0,.22);
+    background: linear-gradient(135deg, #202b68, #28235d);
+    border: 1px solid #44539a;
+    box-shadow: 0 8px 24px rgba(0,0,0,.24);
 }
 
 .brand-title {
@@ -112,12 +113,12 @@ section[data-testid="stSidebar"] * {
 }
 
 .brand-sub {
-    color: #b9cce5 !important;
+    color: #aebde0 !important;
     font-size: .78rem;
 }
 
 .nav-caption {
-    color: #a8c0df !important;
+    color: #8fa5d8 !important;
     font-size: .68rem;
     text-transform: uppercase;
     letter-spacing: .11em;
@@ -126,7 +127,7 @@ section[data-testid="stSidebar"] * {
 }
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label {
-    background: rgba(255,255,255,.055) !important;
+    background: rgba(255,255,255,.035);
     border: 1px solid transparent;
     border-radius: 12px;
     padding: .62rem .72rem;
@@ -134,18 +135,18 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label {
 }
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
-    color: #dbe8f7 !important;
+    color: #d5def3 !important;
 }
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
-    background: rgba(96,142,231,.22) !important;
-    border-color: #5d7eae;
+    background: rgba(99,102,241,.18);
+    border-color: #44539a;
 }
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
-    background: linear-gradient(100deg, #3474e8, #5751df) !important;
-    border-color: #9bb9f5;
-    box-shadow: inset 3px 0 0 #e3edff, 0 7px 18px rgba(49,95,232,.28);
+    background: linear-gradient(100deg, #315fe8, #5148db);
+    border-color: #8da7ff;
+    box-shadow: inset 3px 0 0 #dbe7ff, 0 7px 18px rgba(49,95,232,.28);
 }
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) p {
@@ -158,8 +159,8 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
    ============================================================ */
 
 .hero {
-    background: linear-gradient(135deg, #f6faff 0%, #edf5fa 100%) !important;
-    border: 1px solid #aec7df;
+    background: linear-gradient(135deg, #ffffff 0%, #edf4ff 100%);
+    border: 1px solid #cbd8ea;
     border-radius: 20px;
     padding: 1.25rem 1.35rem;
     box-shadow: 0 8px 24px rgba(42,62,91,.10);
@@ -167,24 +168,22 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
 }
 
 .hero-title {
-    color: #14243a !important;
+    color: #172033 !important;
     font-size: 2rem;
     font-weight: 850;
     letter-spacing: -.04em;
 }
 
 .hero-sub {
-    color: #4c627a !important;
+    color: #52647c !important;
     font-size: .96rem;
 }
 
-/* Existing custom section banners */
-div[style*="border-radius:18px"] {
-    color: #172b43 !important;
-}
-
-div[style*="border-radius:18px"] div {
-    color: #172b43 !important;
+/* All common custom section cards */
+div[data-testid="stVerticalBlock"] .section-card,
+.sentinel-section,
+.section-header {
+    color: #172033;
 }
 
 /* ============================================================
@@ -192,23 +191,23 @@ div[style*="border-radius:18px"] div {
    ============================================================ */
 
 [data-testid="stMetric"] {
-    background: #ffffff !important;
-    border: 1px solid #b9cede;
+    background: #ffffff;
+    border: 1px solid #d3deeb;
     border-radius: 15px;
     padding: .8rem .9rem;
-    box-shadow: 0 6px 18px rgba(42,62,91,.09);
+    box-shadow: 0 6px 18px rgba(42,62,91,.08);
 }
 
 [data-testid="stMetricLabel"] {
-    color: #536b84 !important;
+    color: #60728a !important;
 }
 
 [data-testid="stMetricValue"] {
-    color: #14243a !important;
+    color: #172033 !important;
 }
 
 [data-testid="stMetricDelta"] {
-    color: #52677e !important;
+    color: #52647c !important;
 }
 
 /* ============================================================
@@ -220,8 +219,8 @@ div[data-baseweb="input"] > div,
 .stTextInput input,
 .stNumberInput input {
     background: #ffffff !important;
-    color: #172b43 !important;
-    border: 1px solid #aebfd1 !important;
+    color: #172033 !important;
+    border: 1px solid #c4d0df !important;
     border-radius: 10px !important;
 }
 
@@ -229,28 +228,29 @@ div[data-baseweb="select"] *,
 div[data-baseweb="input"] *,
 .stTextInput input::placeholder,
 .stNumberInput input::placeholder {
-    color: #334b64 !important;
+    color: #33445c !important;
 }
 
 .stTextInput label,
 .stNumberInput label,
 .stSelectbox label {
-    color: #20344d !important;
+    color: #243247 !important;
     font-weight: 650;
 }
 
 div[data-baseweb="select"] > div:focus-within,
 div[data-baseweb="input"] > div:focus-within {
-    border-color: #4c78df !important;
-    box-shadow: 0 0 0 1px #4c78df !important;
+    border-color: #4968e8 !important;
+    box-shadow: 0 0 0 1px #4968e8 !important;
 }
 
+/* Dropdown menu */
 div[role="listbox"] {
     background: #ffffff !important;
 }
 
 div[role="option"] {
-    color: #172b43 !important;
+    color: #172033 !important;
 }
 
 /* ============================================================
@@ -259,8 +259,8 @@ div[role="option"] {
 
 .stButton > button {
     color: #ffffff !important;
-    background: linear-gradient(135deg, #3474e8, #5751df) !important;
-    border: 1px solid #5576df !important;
+    background: linear-gradient(135deg, #2864e8, #5147df) !important;
+    border: 1px solid #4768e8 !important;
     border-radius: 10px !important;
     font-weight: 750 !important;
     box-shadow: 0 6px 16px rgba(49,95,232,.20);
@@ -272,81 +272,16 @@ div[role="option"] {
 }
 
 /* ============================================================
-   ALL STREAMLIT ALERTS — LIGHT + READABLE
-   Covers st.info / st.success / st.warning / st.error
-   and prevents the dim black-on-dark problem.
+   INFO / SUCCESS / WARNING / ERROR
    ============================================================ */
 
-[data-testid="stAlert"],
-.stAlert,
-div[role="alert"],
-[data-baseweb="notification"] {
-    border-radius: 12px !important;
-    box-shadow: 0 4px 14px rgba(42,62,91,.07) !important;
-    opacity: 1 !important;
+div[data-testid="stAlert"] {
+    border-radius: 12px;
 }
 
-[data-testid="stAlert"] *,
-.stAlert *,
-div[role="alert"] *,
-[data-baseweb="notification"] * {
-    opacity: 1 !important;
-}
-
-/* INFO — AI explanation + neutral messages */
-[data-testid="stAlert"]:has([data-testid="stNotificationIcon-info"]),
-.stAlert:has([data-testid="stNotificationIcon-info"]),
-div[role="alert"]:has([data-testid="stNotificationIcon-info"]) {
-    background: #e5f2fb !important;
-    border: 1px solid #a9c8ed !important;
-}
-
-[data-testid="stAlert"]:has([data-testid="stNotificationIcon-info"]) *,
-.stAlert:has([data-testid="stNotificationIcon-info"]) *,
-div[role="alert"]:has([data-testid="stNotificationIcon-info"]) * {
-    color: #122842 !important;
-}
-
-/* SUCCESS — release / PASS */
-[data-testid="stAlert"]:has([data-testid="stNotificationIcon-success"]),
-.stAlert:has([data-testid="stNotificationIcon-success"]),
-div[role="alert"]:has([data-testid="stNotificationIcon-success"]) {
-    background: #e3f5ea !important;
-    border: 1px solid #9ed8b8 !important;
-}
-
-[data-testid="stAlert"]:has([data-testid="stNotificationIcon-success"]) *,
-.stAlert:has([data-testid="stNotificationIcon-success"]) *,
-div[role="alert"]:has([data-testid="stNotificationIcon-success"]) * {
-    color: #123a28 !important;
-}
-
-/* WARNING — verify / hold */
-[data-testid="stAlert"]:has([data-testid="stNotificationIcon-warning"]),
-.stAlert:has([data-testid="stNotificationIcon-warning"]),
-div[role="alert"]:has([data-testid="stNotificationIcon-warning"]) {
-    background: #fff4c9 !important;
-    border: 1px solid #e3c968 !important;
-}
-
-[data-testid="stAlert"]:has([data-testid="stNotificationIcon-warning"]) *,
-.stAlert:has([data-testid="stNotificationIcon-warning"]) *,
-div[role="alert"]:has([data-testid="stNotificationIcon-warning"]) * {
-    color: #3c300d !important;
-}
-
-/* ERROR — block / fail */
-[data-testid="stAlert"]:has([data-testid="stNotificationIcon-error"]),
-.stAlert:has([data-testid="stNotificationIcon-error"]),
-div[role="alert"]:has([data-testid="stNotificationIcon-error"]) {
-    background: #fde3e6 !important;
-    border: 1px solid #e5a9b2 !important;
-}
-
-[data-testid="stAlert"]:has([data-testid="stNotificationIcon-error"]) *,
-.stAlert:has([data-testid="stNotificationIcon-error"]) *,
-div[role="alert"]:has([data-testid="stNotificationIcon-error"]) * {
-    color: #4a1720 !important;
+div[data-testid="stAlert"] p,
+div[data-testid="stAlert"] span {
+    color: #172033 !important;
 }
 
 /* ============================================================
@@ -355,7 +290,7 @@ div[role="alert"]:has([data-testid="stNotificationIcon-error"]) * {
 
 [data-testid="stDataFrame"] {
     background: #ffffff;
-    border: 1px solid #b9cede;
+    border: 1px solid #d1dce9;
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 5px 16px rgba(42,62,91,.07);
@@ -366,18 +301,18 @@ div[role="alert"]:has([data-testid="stNotificationIcon-error"]) * {
    ============================================================ */
 
 [data-testid="stExpander"] {
-    background: #ffffff !important;
-    border: 1px solid #b9cede;
+    background: #ffffff;
+    border: 1px solid #d1dce9;
     border-radius: 12px;
 }
 
 [data-testid="stExpander"] summary,
 [data-testid="stExpander"] summary p {
-    color: #172b43 !important;
+    color: #172033 !important;
 }
 
 button[data-baseweb="tab"] {
-    color: #4f647b !important;
+    color: #52647c !important;
 }
 
 button[data-baseweb="tab"][aria-selected="true"] {
@@ -385,65 +320,23 @@ button[data-baseweb="tab"][aria-selected="true"] {
 }
 
 hr {
-    border-color: #b8cbdc !important;
+    border-color: #d4deea !important;
 }
 
 /* ============================================================
-   EXISTING CUSTOM DARK PANELS
-   Keep these intentionally darker, but readable.
+   CUSTOM DARK STATUS / POLICY ELEMENTS
    ============================================================ */
 
 .sentinel-dark-panel {
-    background: #294766 !important;
-    color: #f7fbff !important;
-    border: 1px solid #456482;
+    background: #16233a;
+    color: #f7faff;
+    border: 1px solid #2d4262;
     border-radius: 14px;
     padding: 1rem;
 }
 
 .sentinel-dark-panel * {
-    color: #f7fbff !important;
-}
-
-/* Inline cards that may have inherited dark styling:
-   force their text to match their light surfaces. */
-div[style*="background:#edf5fa"] *,
-div[style*="background:linear-gradient(135deg,#edf5fa"] *,
-div[style*="background:linear-gradient(135deg,#f0edf4"] *,
-div[style*="background:linear-gradient(135deg,#e9f6ee"] * {
-    color: #172b43 !important;
-}
-
-/* Policy cards: black text */
-div[style*="background:#9BE7B1"] *,
-div[style*="background:#F7DF63"] *,
-div[style*="background:#E88B9B"] * {
-    color: #000000 !important;
-}
-
-/* ============================================================
-   DISTINCT CONTENT CARDS
-   Main background stays slate-blue; content blocks stay lighter.
-   ============================================================ */
-
-[data-testid="stVerticalBlockBorderWrapper"] {
-    border-color: #c0d0dc !important;
-}
-
-[data-testid="stHorizontalBlock"] {
-    gap: 1rem;
-}
-
-/* Keep common bordered containers visibly lighter than page */
-div[data-testid="stVerticalBlockBorderWrapper"] > div {
-    background: #ffffff;
-    border-radius: 14px;
-}
-
-/* Progress bars */
-div[data-testid="stProgress"] {
-    background: #e1eaf1 !important;
-    border-radius: 999px;
+    color: #f7faff !important;
 }
 
 /* ============================================================
@@ -482,6 +375,7 @@ div[data-testid="stProgress"] {
     h3 { font-size: 1.15rem !important; }
 }
 
+/* Streamlit chrome */
 #MainMenu {
     visibility: hidden;
 }
@@ -489,6 +383,14 @@ div[data-testid="stProgress"] {
 footer {
     visibility: hidden;
 }
+
+/* Force policy cards to readable black text regardless of surrounding theme */
+div[style*="background:#9BE7B1"] *,
+div[style*="background:#F7DF63"] *,
+div[style*="background:#E88B9B"] * {
+    color: #000000 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1642,103 +1544,6 @@ ledger = load_jsonl(LEDGER_PATH)
 audit = load_jsonl(AUDIT_PATH)
 referral_graph, graph_cluster_map = build_referral_graph(users)
 
-
-# ============================================================
-# MODEL EXPLAINABILITY
-# ============================================================
-
-def load_global_feature_importance():
-    """Read the real trained model's global feature importance."""
-    try:
-        import joblib
-        for p in (
-            PROJECT_ROOT / "reports" / "fraud_ring_model.joblib",
-            PROJECT_ROOT / "src" / "reports" / "fraud_ring_model.joblib",
-        ):
-            if p.exists():
-                model = joblib.load(p)
-                vals = getattr(model, "feature_importances_", None)
-                if vals is None:
-                    return pd.DataFrame()
-                names = list(getattr(model, "feature_names_in_", []))
-                if not names:
-                    names = [
-                        "cluster_size","n_referral_edges","referral_tree_depth","graph_density",
-                        "fan_out_ratio","signup_span_hours","signups_per_hour",
-                        "n_unique_devices","n_unique_ips","n_unique_instruments",
-                        "device_reuse_ratio","ip_reuse_ratio","instrument_reuse_ratio",
-                        "addr_concentration_ratio","top_instrument_share","top_device_share",
-                        "avg_txn_post_signup","avg_txn_value_post_signup",
-                        "avg_active_days_post_signup","pct_zero_engagement",
-                        "total_bonus_claimed","avg_bonus_claimed",
-                    ]
-                n = min(len(names), len(vals))
-                return pd.DataFrame({
-                    "Parameter": names[:n],
-                    "Global importance": [float(x) * 100 for x in vals[:n]],
-                }).sort_values("Global importance", ascending=False)
-    except Exception:
-        pass
-    return pd.DataFrame()
-
-
-def render_risk_reasoning(selected_row, risk_score, action):
-    st.markdown("### 🧠 How the AI formed this risk score")
-    st.caption(
-        "The fraud detector is a Gradient Boosting ensemble (200 trees, max depth 3, "
-        "learning rate 0.08). It does not use simple linear parameter weights. "
-        "The table shows the trained model's global feature importance; the second "
-        "table shows the actual values for this cluster."
-    )
-
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Risk score", f"{float(risk_score):.4f}")
-    m2.metric("Model", "Gradient Boosting")
-    m3.metric("Trees", "200")
-    m4.metric("Depth", "3")
-
-    left, right = st.columns(2)
-    with left:
-        st.markdown("#### Top model-important parameters")
-        imp = load_global_feature_importance()
-        if imp.empty:
-            st.info("Model importance is unavailable.")
-        else:
-            st.dataframe(
-                imp.head(7),
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "Global importance": st.column_config.NumberColumn(format="%.2f%%")
-                },
-            )
-
-    with right:
-        st.markdown("#### Actual cluster values")
-        names = [
-            "cluster_size","n_referral_edges","referral_tree_depth","graph_density",
-            "fan_out_ratio","signup_span_hours","signups_per_hour",
-            "n_unique_devices","n_unique_ips","n_unique_instruments",
-            "device_reuse_ratio","ip_reuse_ratio","instrument_reuse_ratio",
-            "addr_concentration_ratio","top_instrument_share","top_device_share",
-            "avg_txn_post_signup","avg_txn_value_post_signup",
-            "avg_active_days_post_signup","pct_zero_engagement",
-            "total_bonus_claimed","avg_bonus_claimed",
-        ]
-        vals = [
-            {"Parameter": n, "Observed value": selected_row[n]}
-            for n in names
-            if n in selected_row.index and pd.notna(selected_row[n])
-        ]
-        st.dataframe(pd.DataFrame(vals), use_container_width=True, hide_index=True)
-
-    st.info(
-        f"Model output: {float(risk_score):.4f} → "
-        f"{str(action).replace('_', ' ')}. "
-        "The autonomous payout policy then applies its decision thresholds."
-    )
-
-
 # ============================================================
 # DERIVED VALUES (AVAILABLE TO EVERY WORKSPACE)
 # ============================================================
@@ -1937,7 +1742,7 @@ if active_section == "🏠 Overview":
 elif active_section == "⚡ Live Bonus Claim":
     st.markdown(
         """
-        <div style="background:linear-gradient(135deg,#edf5fa,#e6f2ff);border:1px solid #bfdbfe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+        <div style="background:linear-gradient(135deg,#eef7ff,#e6f2ff);border:1px solid #bfdbfe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
           <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">⚡ Live Bonus Claim</div>
           <div style="color:#475569;margin-top:4px;">Claim-level analysis • evaluate one referral-bonus claim using immediate evidence.</div>
         </div>
@@ -2053,7 +1858,7 @@ elif active_section == "⚡ Live Bonus Claim":
 elif active_section == "🔗 Cluster Analysis":
     st.markdown(
         """
-        <div style="background:linear-gradient(135deg,#f0edf4,#f1e9ff);border:1px solid #d8b4fe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+        <div style="background:linear-gradient(135deg,#f7f1ff,#f1e9ff);border:1px solid #d8b4fe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
           <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">🔗 Fraud Cluster Analysis</div>
           <div style="color:#475569;margin-top:4px;">Cluster-level analysis • inspect connected accounts, model evidence, policy and AI explanation.</div>
         </div>
@@ -2413,9 +2218,6 @@ elif active_section == "🔗 Cluster Analysis":
                         else:
                             st.error("FAIL")
 
-            # Transparent model evidence requested for the audit/pitch.
-            render_risk_reasoning(row, risk_score, initial_action)
-
             # Model evidence
             st.markdown("### 🔎 Why the Model Flagged This Cluster")
 
@@ -2491,7 +2293,7 @@ elif active_section == "🔗 Cluster Analysis":
 elif active_section == "🗃️ Data & Referral Graph":
     st.markdown(
         """
-        <div style="background:linear-gradient(135deg,#e9f6ee,#eaf8f1);border:1px solid #bbf7d0;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+        <div style="background:linear-gradient(135deg,#f1fbf6,#eaf8f1);border:1px solid #bbf7d0;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
           <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">🗃️ Data & Referral Graph</div>
           <div style="color:#475569;margin-top:4px;">Evidence workspace • inspect datasets, Razorpay test events and the referral network.</div>
         </div>
@@ -2668,17 +2470,7 @@ elif active_section == "🗃️ Data & Referral Graph":
             )
 
             st.markdown("#### 🔍 Zoom into one cluster")
-            cluster_options = (
-    sorted(
-        users["cluster_id"]
-        .dropna()
-        .astype(str)
-        .unique()
-        .tolist()
-    )
-    if "cluster_id" in users.columns
-    else []
-)
+            cluster_options = sorted(users["cluster_id"].astype(str).unique().tolist()) if "cluster_id" in users.columns else []
             if cluster_options:
                 graph_choice = st.selectbox(
                     "Choose a cluster",
@@ -2940,33 +2732,6 @@ elif active_section == "📜 Audit Trail":
 
 
 elif active_section == "💰 Bonus Protection":
-
-    _total_bonus_exposure = (
-        float(features["total_bonus_claimed"].sum())
-        if not features.empty and "total_bonus_claimed" in features.columns
-        else 0.0
-    )
-    _blocked_pct = (
-        float(blocked_money) / _total_bonus_exposure * 100.0
-        if _total_bonus_exposure > 0 else 0.0
-    )
-    st.markdown(
-        f"""
-        <div style="background:#e7f4ec;border:1px solid #b7d8c3;border-radius:14px;
-                    padding:14px 16px;margin:8px 0 16px 0;">
-          <div style="font-size:.78rem;font-weight:700;color:#476254;text-transform:uppercase;">
-            Referral-bonus exposure protected
-          </div>
-          <div style="font-size:1.9rem;font-weight:850;color:#183c29;">
-            {_blocked_pct:.1f}%
-          </div>
-          <div style="font-size:.82rem;color:#52705f;">
-            Share of total bonus exposure blocked by the high-risk policy.
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
     # ============================================================
     # MONEY MOVEMENT
     # ============================================================
