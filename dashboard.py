@@ -1642,6 +1642,103 @@ ledger = load_jsonl(LEDGER_PATH)
 audit = load_jsonl(AUDIT_PATH)
 referral_graph, graph_cluster_map = build_referral_graph(users)
 
+
+# ============================================================
+# MODEL EXPLAINABILITY
+# ============================================================
+
+def load_global_feature_importance():
+    """Read the real trained model's global feature importance."""
+    try:
+        import joblib
+        for p in (
+            PROJECT_ROOT / "reports" / "fraud_ring_model.joblib",
+            PROJECT_ROOT / "src" / "reports" / "fraud_ring_model.joblib",
+        ):
+            if p.exists():
+                model = joblib.load(p)
+                vals = getattr(model, "feature_importances_", None)
+                if vals is None:
+                    return pd.DataFrame()
+                names = list(getattr(model, "feature_names_in_", []))
+                if not names:
+                    names = [
+                        "cluster_size","n_referral_edges","referral_tree_depth","graph_density",
+                        "fan_out_ratio","signup_span_hours","signups_per_hour",
+                        "n_unique_devices","n_unique_ips","n_unique_instruments",
+                        "device_reuse_ratio","ip_reuse_ratio","instrument_reuse_ratio",
+                        "addr_concentration_ratio","top_instrument_share","top_device_share",
+                        "avg_txn_post_signup","avg_txn_value_post_signup",
+                        "avg_active_days_post_signup","pct_zero_engagement",
+                        "total_bonus_claimed","avg_bonus_claimed",
+                    ]
+                n = min(len(names), len(vals))
+                return pd.DataFrame({
+                    "Parameter": names[:n],
+                    "Global importance": [float(x) * 100 for x in vals[:n]],
+                }).sort_values("Global importance", ascending=False)
+    except Exception:
+        pass
+    return pd.DataFrame()
+
+
+def render_risk_reasoning(selected_row, risk_score, action):
+    st.markdown("### 🧠 How the AI formed this risk score")
+    st.caption(
+        "The fraud detector is a Gradient Boosting ensemble (200 trees, max depth 3, "
+        "learning rate 0.08). It does not use simple linear parameter weights. "
+        "The table shows the trained model's global feature importance; the second "
+        "table shows the actual values for this cluster."
+    )
+
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Risk score", f"{float(risk_score):.4f}")
+    m2.metric("Model", "Gradient Boosting")
+    m3.metric("Trees", "200")
+    m4.metric("Depth", "3")
+
+    left, right = st.columns(2)
+    with left:
+        st.markdown("#### Top model-important parameters")
+        imp = load_global_feature_importance()
+        if imp.empty:
+            st.info("Model importance is unavailable.")
+        else:
+            st.dataframe(
+                imp.head(7),
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "Global importance": st.column_config.NumberColumn(format="%.2f%%")
+                },
+            )
+
+    with right:
+        st.markdown("#### Actual cluster values")
+        names = [
+            "cluster_size","n_referral_edges","referral_tree_depth","graph_density",
+            "fan_out_ratio","signup_span_hours","signups_per_hour",
+            "n_unique_devices","n_unique_ips","n_unique_instruments",
+            "device_reuse_ratio","ip_reuse_ratio","instrument_reuse_ratio",
+            "addr_concentration_ratio","top_instrument_share","top_device_share",
+            "avg_txn_post_signup","avg_txn_value_post_signup",
+            "avg_active_days_post_signup","pct_zero_engagement",
+            "total_bonus_claimed","avg_bonus_claimed",
+        ]
+        vals = [
+            {"Parameter": n, "Observed value": selected_row[n]}
+            for n in names
+            if n in selected_row.index and pd.notna(selected_row[n])
+        ]
+        st.dataframe(pd.DataFrame(vals), use_container_width=True, hide_index=True)
+
+    st.info(
+        f"Model output: {float(risk_score):.4f} → "
+        f"{str(action).replace('_', ' ')}. "
+        "The autonomous payout policy then applies its decision thresholds."
+    )
+
+
 # ============================================================
 # DERIVED VALUES (AVAILABLE TO EVERY WORKSPACE)
 # ============================================================
@@ -2316,6 +2413,9 @@ elif active_section == "🔗 Cluster Analysis":
                         else:
                             st.error("FAIL")
 
+            # Transparent model evidence requested for the audit/pitch.
+            render_risk_reasoning(row, risk_score, initial_action)
+
             # Model evidence
             st.markdown("### 🔎 Why the Model Flagged This Cluster")
 
@@ -2840,6 +2940,33 @@ elif active_section == "📜 Audit Trail":
 
 
 elif active_section == "💰 Bonus Protection":
+
+    _total_bonus_exposure = (
+        float(features["total_bonus_claimed"].sum())
+        if not features.empty and "total_bonus_claimed" in features.columns
+        else 0.0
+    )
+    _blocked_pct = (
+        float(blocked_money) / _total_bonus_exposure * 100.0
+        if _total_bonus_exposure > 0 else 0.0
+    )
+    st.markdown(
+        f"""
+        <div style="background:#e7f4ec;border:1px solid #b7d8c3;border-radius:14px;
+                    padding:14px 16px;margin:8px 0 16px 0;">
+          <div style="font-size:.78rem;font-weight:700;color:#476254;text-transform:uppercase;">
+            Referral-bonus exposure protected
+          </div>
+          <div style="font-size:1.9rem;font-weight:850;color:#183c29;">
+            {_blocked_pct:.1f}%
+          </div>
+          <div style="font-size:.82rem;color:#52705f;">
+            Share of total bonus exposure blocked by the high-risk policy.
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     # ============================================================
     # MONEY MOVEMENT
     # ============================================================
