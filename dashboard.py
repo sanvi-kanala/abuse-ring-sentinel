@@ -40,104 +40,112 @@ st.set_page_config(
 st.markdown("""
 <style>
 /* ============================================================
-   ABUSE-RING SENTINEL — DARK + MOBILE-FRIENDLY THEME
+   ABUSE-RING SENTINEL — LIGHT BLUE / HIGH CONTRAST THEME
+   Distinct navy sidebar + soft blue main workspace.
    ============================================================ */
 
 .stApp {
-    background:
-        radial-gradient(circle at 10% 0%, rgba(37,99,235,.16), transparent 28%),
-        radial-gradient(circle at 90% 5%, rgba(99,102,241,.14), transparent 28%),
-        linear-gradient(180deg, #07111f 0%, #0b1729 48%, #091321 100%);
-    color: #f8fafc;
+    background: linear-gradient(180deg, #d7e7f4 0%, #e4f0f8 52%, #dbeaf6 100%) !important;
+    color: #15263d !important;
+}
+
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(180deg, #d7e7f4 0%, #e4f0f8 52%, #dbeaf6 100%) !important;
+}
+
+[data-testid="stHeader"] {
+    background: rgba(215,231,244,.96) !important;
 }
 
 .block-container {
-    padding-top: 1.2rem;
-    padding-bottom: 2rem;
-    max-width: 1500px;
+    max-width: 1450px;
+    padding-top: 1.25rem;
+    padding-bottom: 2.5rem;
 }
 
-h1, h2, h3, h4 {
-    color: #f8fafc !important;
+/* ---------- Main text ---------- */
+.stApp p,
+.stApp li,
+.stApp label,
+.stApp [data-testid="stMarkdownContainer"] p {
+    color: #20344d;
 }
 
-p, span, label, .stMarkdown {
-    color: #dbe7f5;
+h1, h2, h3, h4, h5 {
+    color: #14243a !important;
 }
 
-.stCaption,
-[data-testid="stCaptionContainer"] {
-    color: #9fb1c9 !important;
-}
+/* ============================================================
+   SIDEBAR — DARKER THAN MAIN CONTENT
+   ============================================================ */
 
-/* ---------- Sidebar ---------- */
 section[data-testid="stSidebar"] {
     background:
-        radial-gradient(circle at 20% 8%, rgba(59,130,246,.20), transparent 25%),
-        radial-gradient(circle at 90% 42%, rgba(124,58,237,.16), transparent 28%),
-        linear-gradient(180deg, #071225 0%, #0b1630 50%, #100d25 100%);
-    border-right: 1px solid #243653;
-    box-shadow: 8px 0 30px rgba(0,0,0,.35);
+        radial-gradient(circle at 20% 5%, rgba(78,116,220,.22), transparent 28%),
+        linear-gradient(180deg, #172b4b 0%, #1b3155 52%, #202957 100%) !important;
+    border-right: 1px solid #304b70;
+    box-shadow: 7px 0 28px rgba(25,50,80,.20);
 }
 
 section[data-testid="stSidebar"] > div {
-    padding-top: 1.15rem;
+    background: transparent !important;
+    padding-top: 1.1rem;
 }
 
 section[data-testid="stSidebar"] * {
-    color: #e8eefc;
+    color: #edf5ff;
 }
 
 .sentinel-brand {
-    padding: .65rem .7rem 1rem .7rem;
-    margin-bottom: .3rem;
+    padding: .8rem .75rem 1rem;
+    margin-bottom: .45rem;
     border-radius: 15px;
-    background: linear-gradient(135deg, rgba(37,99,235,.25), rgba(124,58,237,.20));
-    border: 1px solid rgba(147,197,253,.20);
-    box-shadow: 0 8px 24px rgba(0,0,0,.30);
+    background: linear-gradient(135deg, #263f70, #303b78) !important;
+    border: 1px solid #5876a8;
+    box-shadow: 0 8px 24px rgba(0,0,0,.22);
 }
 
 .brand-title {
+    color: #ffffff !important;
     font-size: 1.38rem;
     font-weight: 850;
-    letter-spacing: -.025em;
-    color: #ffffff !important;
 }
 
 .brand-sub {
-    color: #9fb1d0 !important;
+    color: #b9cce5 !important;
     font-size: .78rem;
-    margin-top: .2rem;
 }
 
 .nav-caption {
-    color: #7f9bc8 !important;
+    color: #a8c0df !important;
     font-size: .68rem;
     text-transform: uppercase;
     letter-spacing: .11em;
     font-weight: 850;
-    margin: .7rem 0 .45rem .25rem;
+    margin: .75rem 0 .45rem .25rem;
 }
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label {
+    background: rgba(255,255,255,.055) !important;
+    border: 1px solid transparent;
     border-radius: 12px;
     padding: .62rem .72rem;
     margin-bottom: .18rem;
-    border: 1px solid transparent;
-    background: rgba(255,255,255,.025);
+}
+
+section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
+    color: #dbe8f7 !important;
 }
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
-    background: rgba(59,130,246,.15);
-    border-color: rgba(125,211,252,.18);
+    background: rgba(96,142,231,.22) !important;
+    border-color: #5d7eae;
 }
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
-    background: linear-gradient(100deg, #2563eb 0%, #4f46e5 58%, #6366f1 100%);
-    border: 1px solid rgba(191,219,254,.38);
-    box-shadow:
-        inset 3px 0 0 #bfdbfe,
-        0 8px 22px rgba(37,99,235,.25);
+    background: linear-gradient(100deg, #3474e8, #5751df) !important;
+    border-color: #9bb9f5;
+    box-shadow: inset 3px 0 0 #e3edff, 0 7px 18px rgba(49,95,232,.28);
 }
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) p {
@@ -145,113 +153,294 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
     font-weight: 800;
 }
 
-section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
-    color: #cbd8ef !important;
+/* ============================================================
+   HERO / SECTION BANNERS
+   ============================================================ */
+
+.hero {
+    background: linear-gradient(135deg, #eaf4fc 0%, #dcecf8 100%) !important;
+    border: 1px solid #aec7df;
+    border-radius: 20px;
+    padding: 1.25rem 1.35rem;
+    box-shadow: 0 8px 24px rgba(42,62,91,.10);
+    margin-bottom: 1.15rem;
 }
 
-/* ---------- Metric cards ---------- */
+.hero-title {
+    color: #14243a !important;
+    font-size: 2rem;
+    font-weight: 850;
+    letter-spacing: -.04em;
+}
+
+.hero-sub {
+    color: #4c627a !important;
+    font-size: .96rem;
+}
+
+/* Existing custom section banners */
+div[style*="border-radius:18px"] {
+    color: #172b43 !important;
+}
+
+div[style*="border-radius:18px"] div {
+    color: #172b43 !important;
+}
+
+/* ============================================================
+   METRICS
+   ============================================================ */
+
 [data-testid="stMetric"] {
-    border: 1px solid #2c4263;
+    background: #eaf3fa !important;
+    border: 1px solid #b9cede;
     border-radius: 15px;
-    padding: .75rem .85rem;
-    background: linear-gradient(145deg, #111f34 0%, #0d192b 100%);
-    box-shadow: 0 8px 22px rgba(0,0,0,.25);
+    padding: .8rem .9rem;
+    box-shadow: 0 6px 18px rgba(42,62,91,.09);
 }
 
 [data-testid="stMetricLabel"] {
-    color: #9fb1c9 !important;
+    color: #536b84 !important;
 }
 
 [data-testid="stMetricValue"] {
-    color: #f8fafc !important;
+    color: #14243a !important;
 }
 
-/* ---------- Buttons ---------- */
-.stButton > button {
-    border-radius: 10px;
-    font-weight: 750;
-    border: 1px solid #5269d9;
-    background: linear-gradient(135deg, #2563eb, #4f46e5);
-    color: #ffffff !important;
-    box-shadow: 0 6px 18px rgba(37,99,235,.25);
+[data-testid="stMetricDelta"] {
+    color: #52677e !important;
 }
 
-.stButton > button:hover {
-    border-color: #93c5fd;
-    box-shadow: 0 8px 22px rgba(37,99,235,.35);
-}
+/* ============================================================
+   INPUTS
+   ============================================================ */
 
-/* ---------- Inputs ---------- */
 div[data-baseweb="select"] > div,
-div[data-baseweb="input"] > div {
-    border-radius: 10px;
-    border: 1px solid #334b6e;
-    background: #101e32;
-    color: #f8fafc;
+div[data-baseweb="input"] > div,
+.stTextInput input,
+.stNumberInput input {
+    background: #f7fbfe !important;
+    color: #172b43 !important;
+    border: 1px solid #aebfd1 !important;
+    border-radius: 10px !important;
 }
 
 div[data-baseweb="select"] *,
-div[data-baseweb="input"] * {
-    color: #f8fafc !important;
+div[data-baseweb="input"] *,
+.stTextInput input::placeholder,
+.stNumberInput input::placeholder {
+    color: #334b64 !important;
+}
+
+.stTextInput label,
+.stNumberInput label,
+.stSelectbox label {
+    color: #20344d !important;
+    font-weight: 650;
 }
 
 div[data-baseweb="select"] > div:focus-within,
 div[data-baseweb="input"] > div:focus-within {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 1px #6366f1;
+    border-color: #4c78df !important;
+    box-shadow: 0 0 0 1px #4c78df !important;
 }
 
-/* ---------- Dataframes ---------- */
+div[role="listbox"] {
+    background: #f7fbfe !important;
+}
+
+div[role="option"] {
+    color: #172b43 !important;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.stButton > button {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #3474e8, #5751df) !important;
+    border: 1px solid #5576df !important;
+    border-radius: 10px !important;
+    font-weight: 750 !important;
+    box-shadow: 0 6px 16px rgba(49,95,232,.20);
+}
+
+.stButton > button p,
+.stButton > button span {
+    color: #ffffff !important;
+}
+
+/* ============================================================
+   ALL STREAMLIT ALERTS — LIGHT + READABLE
+   Covers st.info / st.success / st.warning / st.error
+   and prevents the dim black-on-dark problem.
+   ============================================================ */
+
+[data-testid="stAlert"],
+.stAlert,
+div[role="alert"],
+[data-baseweb="notification"] {
+    border-radius: 12px !important;
+    box-shadow: 0 4px 14px rgba(42,62,91,.07) !important;
+    opacity: 1 !important;
+}
+
+[data-testid="stAlert"] *,
+.stAlert *,
+div[role="alert"] *,
+[data-baseweb="notification"] * {
+    opacity: 1 !important;
+}
+
+/* INFO — AI explanation + neutral messages */
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-info"]),
+.stAlert:has([data-testid="stNotificationIcon-info"]),
+div[role="alert"]:has([data-testid="stNotificationIcon-info"]) {
+    background: #dcecff !important;
+    border: 1px solid #a9c8ed !important;
+}
+
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-info"]) *,
+.stAlert:has([data-testid="stNotificationIcon-info"]) *,
+div[role="alert"]:has([data-testid="stNotificationIcon-info"]) * {
+    color: #122842 !important;
+}
+
+/* SUCCESS — release / PASS */
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-success"]),
+.stAlert:has([data-testid="stNotificationIcon-success"]),
+div[role="alert"]:has([data-testid="stNotificationIcon-success"]) {
+    background: #d9f3e5 !important;
+    border: 1px solid #9ed8b8 !important;
+}
+
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-success"]) *,
+.stAlert:has([data-testid="stNotificationIcon-success"]) *,
+div[role="alert"]:has([data-testid="stNotificationIcon-success"]) * {
+    color: #123a28 !important;
+}
+
+/* WARNING — verify / hold */
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-warning"]),
+.stAlert:has([data-testid="stNotificationIcon-warning"]),
+div[role="alert"]:has([data-testid="stNotificationIcon-warning"]) {
+    background: #fff0bd !important;
+    border: 1px solid #e3c968 !important;
+}
+
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-warning"]) *,
+.stAlert:has([data-testid="stNotificationIcon-warning"]) *,
+div[role="alert"]:has([data-testid="stNotificationIcon-warning"]) * {
+    color: #3c300d !important;
+}
+
+/* ERROR — block / fail */
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-error"]),
+.stAlert:has([data-testid="stNotificationIcon-error"]),
+div[role="alert"]:has([data-testid="stNotificationIcon-error"]) {
+    background: #ffdfe3 !important;
+    border: 1px solid #e5a9b2 !important;
+}
+
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-error"]) *,
+.stAlert:has([data-testid="stNotificationIcon-error"]) *,
+div[role="alert"]:has([data-testid="stNotificationIcon-error"]) * {
+    color: #4a1720 !important;
+}
+
+/* ============================================================
+   DATAFRAMES
+   ============================================================ */
+
 [data-testid="stDataFrame"] {
-    border: 1px solid #2c4263;
+    background: #f7fbfe;
+    border: 1px solid #b9cede;
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 6px 18px rgba(0,0,0,.25);
+    box-shadow: 0 5px 16px rgba(42,62,91,.07);
 }
 
-/* ---------- Alerts ---------- */
-div[data-testid="stAlert"] {
-    border-radius: 12px;
-}
+/* ============================================================
+   EXPANDERS / TABS / DIVIDERS
+   ============================================================ */
 
-div[data-testid="stAlert"] p,
-div[data-testid="stAlert"] span,
-div[data-testid="stAlert"] div {
-    color: #000000 !important;
-}
-
-/* ---------- Expanders ---------- */
 [data-testid="stExpander"] {
-    background: #0e1b2e;
-    border: 1px solid #2c4263;
+    background: #eaf3fa !important;
+    border: 1px solid #b9cede;
     border-radius: 12px;
 }
 
-[data-testid="stExpander"] summary {
-    color: #f8fafc !important;
+[data-testid="stExpander"] summary,
+[data-testid="stExpander"] summary p {
+    color: #172b43 !important;
 }
 
-/* ---------- Tables / code ---------- */
-table {
-    background: #0e1b2e !important;
-    color: #e5edf8 !important;
+button[data-baseweb="tab"] {
+    color: #4f647b !important;
 }
 
-code {
-    background: #111d31 !important;
-    color: #dbeafe !important;
+button[data-baseweb="tab"][aria-selected="true"] {
+    color: #315fe8 !important;
 }
 
 hr {
-    border-color: #263a58 !important;
+    border-color: #b8cbdc !important;
 }
 
-/* ---------- Mobile ---------- */
+/* ============================================================
+   EXISTING CUSTOM DARK PANELS
+   Keep these intentionally darker, but readable.
+   ============================================================ */
+
+.sentinel-dark-panel {
+    background: #294766 !important;
+    color: #f7fbff !important;
+    border: 1px solid #456482;
+    border-radius: 14px;
+    padding: 1rem;
+}
+
+.sentinel-dark-panel * {
+    color: #f7fbff !important;
+}
+
+/* Inline cards that may have inherited dark styling:
+   force their text to match their light surfaces. */
+div[style*="background:#eef7ff"] *,
+div[style*="background:linear-gradient(135deg,#eef7ff"] *,
+div[style*="background:linear-gradient(135deg,#f7f1ff"] *,
+div[style*="background:linear-gradient(135deg,#f1fbf6"] * {
+    color: #172b43 !important;
+}
+
+/* Policy cards: black text */
+div[style*="background:#9BE7B1"] *,
+div[style*="background:#F7DF63"] *,
+div[style*="background:#E88B9B"] * {
+    color: #000000 !important;
+}
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
 @media (max-width: 768px) {
     .block-container {
-        padding-left: 1rem;
-        padding-right: 1rem;
-        padding-top: .8rem;
+        padding: .75rem .8rem 2rem;
+    }
+
+    .hero {
+        padding: 1rem;
+        border-radius: 16px;
+    }
+
+    .hero-title {
+        font-size: 1.45rem;
+    }
+
+    .hero-sub {
+        font-size: .84rem;
     }
 
     [data-testid="stMetric"] {
@@ -260,20 +449,12 @@ hr {
     }
 
     [data-testid="stMetricValue"] {
-        font-size: 1.5rem !important;
+        font-size: 1.45rem !important;
     }
 
-    h1 {
-        font-size: 1.7rem !important;
-    }
-
-    h2 {
-        font-size: 1.4rem !important;
-    }
-
-    h3 {
-        font-size: 1.15rem !important;
-    }
+    h1 { font-size: 1.7rem !important; }
+    h2 { font-size: 1.4rem !important; }
+    h3 { font-size: 1.15rem !important; }
 }
 
 #MainMenu {
