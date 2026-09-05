@@ -45,16 +45,16 @@ st.markdown("""
    ============================================================ */
 
 .stApp {
-    background: linear-gradient(180deg, #c7d6e2 0%, #d5e1ea 52%, #cbd9e4 100%) !important;
+    background: linear-gradient(180deg, #e5eef5 0%, #f2f7fb 52%, #e9f2f8 100%) !important;
     color: #15263d !important;
 }
 
 [data-testid="stAppViewContainer"] {
-    background: linear-gradient(180deg, #c7d6e2 0%, #d5e1ea 52%, #cbd9e4 100%) !important;
+    background: linear-gradient(180deg, #e5eef5 0%, #f2f7fb 52%, #e9f2f8 100%) !important;
 }
 
 [data-testid="stHeader"] {
-    background: rgba(199,214,226,.97) !important;
+    background: rgba(229,238,245,.97) !important;
 }
 
 .block-container {
@@ -158,7 +158,7 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
    ============================================================ */
 
 .hero {
-    background: linear-gradient(135deg, #e3edf4 0%, #dbe7ef 100%) !important;
+    background: linear-gradient(135deg, #f6faff 0%, #edf5fa 100%) !important;
     border: 1px solid #aec7df;
     border-radius: 20px;
     padding: 1.25rem 1.35rem;
@@ -192,7 +192,7 @@ div[style*="border-radius:18px"] div {
    ============================================================ */
 
 [data-testid="stMetric"] {
-    background: #eef4f8 !important;
+    background: #ffffff !important;
     border: 1px solid #b9cede;
     border-radius: 15px;
     padding: .8rem .9rem;
@@ -219,7 +219,7 @@ div[data-baseweb="select"] > div,
 div[data-baseweb="input"] > div,
 .stTextInput input,
 .stNumberInput input {
-    background: #f8fbfd !important;
+    background: #ffffff !important;
     color: #172b43 !important;
     border: 1px solid #aebfd1 !important;
     border-radius: 10px !important;
@@ -246,7 +246,7 @@ div[data-baseweb="input"] > div:focus-within {
 }
 
 div[role="listbox"] {
-    background: #f8fbfd !important;
+    background: #ffffff !important;
 }
 
 div[role="option"] {
@@ -297,7 +297,7 @@ div[role="alert"] *,
 [data-testid="stAlert"]:has([data-testid="stNotificationIcon-info"]),
 .stAlert:has([data-testid="stNotificationIcon-info"]),
 div[role="alert"]:has([data-testid="stNotificationIcon-info"]) {
-    background: #dcecf7 !important;
+    background: #e5f2fb !important;
     border: 1px solid #a9c8ed !important;
 }
 
@@ -311,7 +311,7 @@ div[role="alert"]:has([data-testid="stNotificationIcon-info"]) * {
 [data-testid="stAlert"]:has([data-testid="stNotificationIcon-success"]),
 .stAlert:has([data-testid="stNotificationIcon-success"]),
 div[role="alert"]:has([data-testid="stNotificationIcon-success"]) {
-    background: #d9f0e3 !important;
+    background: #e3f5ea !important;
     border: 1px solid #9ed8b8 !important;
 }
 
@@ -325,7 +325,7 @@ div[role="alert"]:has([data-testid="stNotificationIcon-success"]) * {
 [data-testid="stAlert"]:has([data-testid="stNotificationIcon-warning"]),
 .stAlert:has([data-testid="stNotificationIcon-warning"]),
 div[role="alert"]:has([data-testid="stNotificationIcon-warning"]) {
-    background: #f5e7b5 !important;
+    background: #fff4c9 !important;
     border: 1px solid #e3c968 !important;
 }
 
@@ -339,7 +339,7 @@ div[role="alert"]:has([data-testid="stNotificationIcon-warning"]) * {
 [data-testid="stAlert"]:has([data-testid="stNotificationIcon-error"]),
 .stAlert:has([data-testid="stNotificationIcon-error"]),
 div[role="alert"]:has([data-testid="stNotificationIcon-error"]) {
-    background: #f3d5da !important;
+    background: #fde3e6 !important;
     border: 1px solid #e5a9b2 !important;
 }
 
@@ -354,7 +354,7 @@ div[role="alert"]:has([data-testid="stNotificationIcon-error"]) * {
    ============================================================ */
 
 [data-testid="stDataFrame"] {
-    background: #f8fbfd;
+    background: #ffffff;
     border: 1px solid #b9cede;
     border-radius: 12px;
     overflow: hidden;
@@ -366,7 +366,7 @@ div[role="alert"]:has([data-testid="stNotificationIcon-error"]) * {
    ============================================================ */
 
 [data-testid="stExpander"] {
-    background: #eef4f8 !important;
+    background: #ffffff !important;
     border: 1px solid #b9cede;
     border-radius: 12px;
 }
@@ -407,10 +407,10 @@ hr {
 
 /* Inline cards that may have inherited dark styling:
    force their text to match their light surfaces. */
-div[style*="background:#e7f0f5"] *,
-div[style*="background:linear-gradient(135deg,#e7f0f5"] *,
-div[style*="background:linear-gradient(135deg,#ebe7f0"] *,
-div[style*="background:linear-gradient(135deg,#e4f1e9"] * {
+div[style*="background:#edf5fa"] *,
+div[style*="background:linear-gradient(135deg,#edf5fa"] *,
+div[style*="background:linear-gradient(135deg,#f0edf4"] *,
+div[style*="background:linear-gradient(135deg,#e9f6ee"] * {
     color: #172b43 !important;
 }
 
@@ -436,13 +436,13 @@ div[style*="background:#E88B9B"] * {
 
 /* Keep common bordered containers visibly lighter than page */
 div[data-testid="stVerticalBlockBorderWrapper"] > div {
-    background: #eef4f8;
+    background: #ffffff;
     border-radius: 14px;
 }
 
 /* Progress bars */
 div[data-testid="stProgress"] {
-    background: #dce5ec !important;
+    background: #e1eaf1 !important;
     border-radius: 999px;
 }
 
@@ -1840,7 +1840,7 @@ if active_section == "🏠 Overview":
 elif active_section == "⚡ Live Bonus Claim":
     st.markdown(
         """
-        <div style="background:linear-gradient(135deg,#e7f0f5,#e6f2ff);border:1px solid #bfdbfe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+        <div style="background:linear-gradient(135deg,#edf5fa,#e6f2ff);border:1px solid #bfdbfe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
           <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">⚡ Live Bonus Claim</div>
           <div style="color:#475569;margin-top:4px;">Claim-level analysis • evaluate one referral-bonus claim using immediate evidence.</div>
         </div>
@@ -1956,7 +1956,7 @@ elif active_section == "⚡ Live Bonus Claim":
 elif active_section == "🔗 Cluster Analysis":
     st.markdown(
         """
-        <div style="background:linear-gradient(135deg,#ebe7f0,#f1e9ff);border:1px solid #d8b4fe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+        <div style="background:linear-gradient(135deg,#f0edf4,#f1e9ff);border:1px solid #d8b4fe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
           <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">🔗 Fraud Cluster Analysis</div>
           <div style="color:#475569;margin-top:4px;">Cluster-level analysis • inspect connected accounts, model evidence, policy and AI explanation.</div>
         </div>
@@ -2391,7 +2391,7 @@ elif active_section == "🔗 Cluster Analysis":
 elif active_section == "🗃️ Data & Referral Graph":
     st.markdown(
         """
-        <div style="background:linear-gradient(135deg,#e4f1e9,#eaf8f1);border:1px solid #bbf7d0;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+        <div style="background:linear-gradient(135deg,#e9f6ee,#eaf8f1);border:1px solid #bbf7d0;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
           <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">🗃️ Data & Referral Graph</div>
           <div style="color:#475569;margin-top:4px;">Evidence workspace • inspect datasets, Razorpay test events and the referral network.</div>
         </div>
