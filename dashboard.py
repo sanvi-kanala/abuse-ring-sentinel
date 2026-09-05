@@ -963,10 +963,22 @@ def _claim_groq_fallback(facts):
 # LIVE CLAIM API
 # ============================================================
 
-SENTINEL_API_URL = os.getenv(
-    "SENTINEL_API_URL",
-    "http://127.0.0.1:8000",
-).rstrip("/")
+# API endpoint:
+# - Local development: defaults to http://127.0.0.1:8000
+# - Streamlit Cloud: set SENTINEL_API_URL in Streamlit Secrets
+#   to the deployed Render API URL.
+def _get_sentinel_api_url():
+    secret_url = None
+    try:
+        secret_url = st.secrets.get("SENTINEL_API_URL")
+    except Exception:
+        pass
+
+    configured = secret_url or os.getenv("SENTINEL_API_URL")
+    return (configured or "http://127.0.0.1:8000").rstrip("/")
+
+
+SENTINEL_API_URL = _get_sentinel_api_url()
 
 
 def _sentinel_port_open():
@@ -974,6 +986,12 @@ def _sentinel_port_open():
     try:
         parsed = urllib.parse.urlparse(SENTINEL_API_URL)
         host = parsed.hostname or "127.0.0.1"
+
+        # A deployed Streamlit dashboard must never try to launch a second
+        # FastAPI process. Only perform the socket check for local development.
+        if host not in {"127.0.0.1", "localhost", "0.0.0.0"}:
+            return True
+
         port = parsed.port or 8000
         with socket.create_connection((host, port), timeout=0.7):
             return True
@@ -982,7 +1000,15 @@ def _sentinel_port_open():
 
 
 def _ensure_sentinel_api():
-    """Start the local FastAPI server if the dashboard cannot reach it."""
+    """Ensure the local API is available; remote deployed APIs need no startup."""
+    parsed = urllib.parse.urlparse(SENTINEL_API_URL)
+    host = parsed.hostname or "127.0.0.1"
+
+    # On Streamlit Cloud, SENTINEL_API_URL points to Render. Never attempt
+    # to spawn the API locally in the Streamlit container.
+    if host not in {"127.0.0.1", "localhost", "0.0.0.0"}:
+        return True, None
+
     if _sentinel_port_open():
         return True, None
 
@@ -1064,8 +1090,8 @@ def submit_bonus_claim(user_id, referrer_id, bonus_amount, payment_id=""):
         return None, f"API returned HTTP {exc.code}: {detail}"
     except Exception as exc:
         return None, (
-            "Could not reach Sentinel API. Start FastAPI with "
-            "`python -m uvicorn src.api.main:app --reload --port 8000`. "
+            f"Could not reach Sentinel API at {SENTINEL_API_URL}. "
+            "Check the deployed API URL and Streamlit secret/configuration. "
             f"Details: {exc}"
         )
 
@@ -1128,8 +1154,8 @@ def resolve_held_claim(claim_id):
 
     except Exception as exc:
         return None, (
-            "Could not reach Sentinel observation API. "
-            "Make sure FastAPI is running on port 8000. "
+            f"Could not reach Sentinel observation API at {SENTINEL_API_URL}. "
+            "Check the deployed API URL and Streamlit secret/configuration. "
             f"Details: {exc}"
         )
 
