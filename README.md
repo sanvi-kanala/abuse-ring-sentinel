@@ -10,13 +10,15 @@ Built for the **Razorpay AI Buildathon 2026 — Track 2: AI Risk Manager**.
 
 # Abuse-Ring Sentinel
 
-[Your existing project description]
+### Autonomous AI Risk Manager for Referral Bonus Abuse
+
+> Detect coordinated abuse rings → Verify ambiguous claims → Protect merchant bonus payouts
 
 ## 🚀 Live Demo
 
-👉 [Open Live Dashboard](YOUR_STREAMLIT_URL)
+**[Open the Live Dashboard](https://abuse-ring-sentinel-n5sdkdcbzbtfu7ejsdkw.streamlit.app/)**
 
-🔗 [Backend API](YOUR_RENDER_URL/docs)
+**[Open API](https://abuse-ring-sentinel-ie88.onrender.com/docs)**
 
 ---
 
