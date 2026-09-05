@@ -40,70 +40,69 @@ st.set_page_config(
 st.markdown("""
 <style>
 /* ============================================================
-   ABUSE-RING SENTINEL — FINAL HIGH-CONTRAST THEME
-   Distinct sidebar + content area, readable text everywhere.
+   ABUSE-RING SENTINEL — LIGHT BLUE / HIGH CONTRAST THEME
+   Distinct navy sidebar + soft blue main workspace.
    ============================================================ */
 
 .stApp {
-    background: #eef3f9;
-    color: #172033;
+    background: linear-gradient(180deg, #e5eef5 0%, #f2f7fb 52%, #e9f2f8 100%) !important;
+    color: #15263d !important;
 }
 
 [data-testid="stAppViewContainer"] {
-    background: #eef3f9;
+    background: linear-gradient(180deg, #e5eef5 0%, #f2f7fb 52%, #e9f2f8 100%) !important;
 }
 
 [data-testid="stHeader"] {
-    background: rgba(238,243,249,.96);
+    background: rgba(229,238,245,.97) !important;
 }
 
-/* Main content */
 .block-container {
     max-width: 1450px;
     padding-top: 1.25rem;
     padding-bottom: 2.5rem;
 }
 
-/* Default text */
+/* ---------- Main text ---------- */
 .stApp p,
 .stApp li,
 .stApp label,
 .stApp [data-testid="stMarkdownContainer"] p {
-    color: #243247;
+    color: #20344d;
 }
 
 h1, h2, h3, h4, h5 {
-    color: #172033 !important;
+    color: #14243a !important;
 }
 
 /* ============================================================
-   SIDEBAR — clearly different from the main content
+   SIDEBAR — DARKER THAN MAIN CONTENT
    ============================================================ */
 
 section[data-testid="stSidebar"] {
     background:
-        radial-gradient(circle at 20% 5%, rgba(68,91,210,.22), transparent 28%),
-        linear-gradient(180deg, #111a3a 0%, #121633 55%, #17122e 100%);
-    border-right: 1px solid #27345e;
-    box-shadow: 7px 0 28px rgba(23,32,51,.18);
+        radial-gradient(circle at 20% 5%, rgba(78,116,220,.22), transparent 28%),
+        linear-gradient(180deg, #172b4b 0%, #1b3155 52%, #202957 100%) !important;
+    border-right: 1px solid #304b70;
+    box-shadow: 7px 0 28px rgba(25,50,80,.20);
 }
 
 section[data-testid="stSidebar"] > div {
-    background: transparent;
+    background: transparent !important;
     padding-top: 1.1rem;
 }
 
 section[data-testid="stSidebar"] * {
-    color: #e9efff;
+    color: #edf5ff;
 }
 
 .sentinel-brand {
     padding: .8rem .75rem 1rem;
     margin-bottom: .45rem;
     border-radius: 15px;
-    background: linear-gradient(135deg, #202b68, #28235d);
-    border: 1px solid #44539a;
-    box-shadow: 0 8px 24px rgba(0,0,0,.24);
+    background: linear-gradient(135deg, #263f70, #303b78) !important;
+    border: 1px solid #5876a8;
+    box-shadow: 0 8px 24px rgba(0,0,0,.22);
 }
 
 .brand-title {
@@ -113,12 +112,12 @@ section[data-testid="stSidebar"] * {
 }
 
 .brand-sub {
-    color: #aebde0 !important;
+    color: #b9cce5 !important;
     font-size: .78rem;
 }
 
 .nav-caption {
-    color: #8fa5d8 !important;
+    color: #a8c0df !important;
     font-size: .68rem;
     text-transform: uppercase;
     letter-spacing: .11em;
@@ -127,7 +126,7 @@ section[data-testid="stSidebar"] * {
 }
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label {
-    background: rgba(255,255,255,.035);
+    background: rgba(255,255,255,.055) !important;
     border: 1px solid transparent;
     border-radius: 12px;
     padding: .62rem .72rem;
@@ -135,18 +134,18 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label {
 }
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label p {
-    color: #d5def3 !important;
+    color: #dbe8f7 !important;
 }
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
-    background: rgba(99,102,241,.18);
-    border-color: #44539a;
+    background: rgba(96,142,231,.22) !important;
+    border-color: #5d7eae;
 }
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
-    background: linear-gradient(100deg, #315fe8, #5148db);
-    border-color: #8da7ff;
-    box-shadow: inset 3px 0 0 #dbe7ff, 0 7px 18px rgba(49,95,232,.28);
+    background: linear-gradient(100deg, #3474e8, #5751df) !important;
+    border-color: #9bb9f5;
+    box-shadow: inset 3px 0 0 #e3edff, 0 7px 18px rgba(49,95,232,.28);
 }
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) p {
@@ -159,8 +158,8 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
    ============================================================ */
 
 .hero {
-    background: linear-gradient(135deg, #ffffff 0%, #edf4ff 100%);
-    border: 1px solid #cbd8ea;
+    background: linear-gradient(135deg, #f6faff 0%, #edf5fa 100%) !important;
+    border: 1px solid #aec7df;
     border-radius: 20px;
     padding: 1.25rem 1.35rem;
     box-shadow: 0 8px 24px rgba(42,62,91,.10);
@@ -168,22 +167,24 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
 }
 
 .hero-title {
-    color: #172033 !important;
+    color: #14243a !important;
     font-size: 2rem;
     font-weight: 850;
     letter-spacing: -.04em;
 }
 
 .hero-sub {
-    color: #52647c !important;
+    color: #4c627a !important;
     font-size: .96rem;
 }
 
-/* All common custom section cards */
-div[data-testid="stVerticalBlock"] .section-card,
-.sentinel-section,
-.section-header {
-    color: #172033;
+/* Existing custom section banners */
+div[style*="border-radius:18px"] {
+    color: #172b43 !important;
+}
+
+div[style*="border-radius:18px"] div {
+    color: #172b43 !important;
 }
 
 /* ============================================================
@@ -191,23 +192,23 @@ div[data-testid="stVerticalBlock"] .section-card,
    ============================================================ */
 
 [data-testid="stMetric"] {
-    background: #ffffff;
-    border: 1px solid #d3deeb;
+    background: #ffffff !important;
+    border: 1px solid #b9cede;
     border-radius: 15px;
     padding: .8rem .9rem;
-    box-shadow: 0 6px 18px rgba(42,62,91,.08);
+    box-shadow: 0 6px 18px rgba(42,62,91,.09);
 }
 
 [data-testid="stMetricLabel"] {
-    color: #60728a !important;
+    color: #536b84 !important;
 }
 
 [data-testid="stMetricValue"] {
-    color: #172033 !important;
+    color: #14243a !important;
 }
 
 [data-testid="stMetricDelta"] {
-    color: #52647c !important;
+    color: #52677e !important;
 }
 
 /* ============================================================
@@ -219,8 +220,8 @@ div[data-baseweb="input"] > div,
 .stTextInput input,
 .stNumberInput input {
     background: #ffffff !important;
-    color: #172033 !important;
-    border: 1px solid #c4d0df !important;
+    color: #172b43 !important;
+    border: 1px solid #aebfd1 !important;
     border-radius: 10px !important;
 }
 
@@ -228,29 +229,28 @@ div[data-baseweb="select"] *,
 div[data-baseweb="input"] *,
 .stTextInput input::placeholder,
 .stNumberInput input::placeholder {
-    color: #33445c !important;
+    color: #334b64 !important;
 }
 
 .stTextInput label,
 .stNumberInput label,
 .stSelectbox label {
-    color: #243247 !important;
+    color: #20344d !important;
     font-weight: 650;
 }
 
 div[data-baseweb="select"] > div:focus-within,
 div[data-baseweb="input"] > div:focus-within {
-    border-color: #4968e8 !important;
-    box-shadow: 0 0 0 1px #4968e8 !important;
+    border-color: #4c78df !important;
+    box-shadow: 0 0 0 1px #4c78df !important;
 }
 
-/* Dropdown menu */
 div[role="listbox"] {
     background: #ffffff !important;
 }
 
 div[role="option"] {
-    color: #172033 !important;
+    color: #172b43 !important;
 }
 
 /* ============================================================
@@ -259,8 +259,8 @@ div[role="option"] {
 
 .stButton > button {
     color: #ffffff !important;
-    background: linear-gradient(135deg, #2864e8, #5147df) !important;
-    border: 1px solid #4768e8 !important;
+    background: linear-gradient(135deg, #3474e8, #5751df) !important;
+    border: 1px solid #5576df !important;
     border-radius: 10px !important;
     font-weight: 750 !important;
     box-shadow: 0 6px 16px rgba(49,95,232,.20);
@@ -272,16 +272,81 @@ div[role="option"] {
 }
 
 /* ============================================================
-   INFO / SUCCESS / WARNING / ERROR
+   ALL STREAMLIT ALERTS — LIGHT + READABLE
+   Covers st.info / st.success / st.warning / st.error
+   and prevents the dim black-on-dark problem.
    ============================================================ */
 
-div[data-testid="stAlert"] {
-    border-radius: 12px;
+[data-testid="stAlert"],
+.stAlert,
+div[role="alert"],
+[data-baseweb="notification"] {
+    border-radius: 12px !important;
+    box-shadow: 0 4px 14px rgba(42,62,91,.07) !important;
+    opacity: 1 !important;
 }
 
-div[data-testid="stAlert"] p,
-div[data-testid="stAlert"] span {
-    color: #172033 !important;
+[data-testid="stAlert"] *,
+.stAlert *,
+div[role="alert"] *,
+[data-baseweb="notification"] * {
+    opacity: 1 !important;
+}
+
+/* INFO — AI explanation + neutral messages */
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-info"]),
+.stAlert:has([data-testid="stNotificationIcon-info"]),
+div[role="alert"]:has([data-testid="stNotificationIcon-info"]) {
+    background: #e5f2fb !important;
+    border: 1px solid #a9c8ed !important;
+}
+
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-info"]) *,
+.stAlert:has([data-testid="stNotificationIcon-info"]) *,
+div[role="alert"]:has([data-testid="stNotificationIcon-info"]) * {
+    color: #122842 !important;
+}
+
+/* SUCCESS — release / PASS */
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-success"]),
+.stAlert:has([data-testid="stNotificationIcon-success"]),
+div[role="alert"]:has([data-testid="stNotificationIcon-success"]) {
+    background: #e3f5ea !important;
+    border: 1px solid #9ed8b8 !important;
+}
+
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-success"]) *,
+.stAlert:has([data-testid="stNotificationIcon-success"]) *,
+div[role="alert"]:has([data-testid="stNotificationIcon-success"]) * {
+    color: #123a28 !important;
+}
+
+/* WARNING — verify / hold */
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-warning"]),
+.stAlert:has([data-testid="stNotificationIcon-warning"]),
+div[role="alert"]:has([data-testid="stNotificationIcon-warning"]) {
+    background: #fff4c9 !important;
+    border: 1px solid #e3c968 !important;
+}
+
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-warning"]) *,
+.stAlert:has([data-testid="stNotificationIcon-warning"]) *,
+div[role="alert"]:has([data-testid="stNotificationIcon-warning"]) * {
+    color: #3c300d !important;
+}
+
+/* ERROR — block / fail */
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-error"]),
+.stAlert:has([data-testid="stNotificationIcon-error"]),
+div[role="alert"]:has([data-testid="stNotificationIcon-error"]) {
+    background: #fde3e6 !important;
+    border: 1px solid #e5a9b2 !important;
+}
+
+[data-testid="stAlert"]:has([data-testid="stNotificationIcon-error"]) *,
+.stAlert:has([data-testid="stNotificationIcon-error"]) *,
+div[role="alert"]:has([data-testid="stNotificationIcon-error"]) * {
+    color: #4a1720 !important;
 }
 
 /* ============================================================
@@ -290,7 +355,7 @@ div[data-testid="stAlert"] span {
 
 [data-testid="stDataFrame"] {
     background: #ffffff;
-    border: 1px solid #d1dce9;
+    border: 1px solid #b9cede;
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 5px 16px rgba(42,62,91,.07);
@@ -301,18 +366,18 @@ div[data-testid="stAlert"] span {
    ============================================================ */
 
 [data-testid="stExpander"] {
-    background: #ffffff;
-    border: 1px solid #d1dce9;
+    background: #ffffff !important;
+    border: 1px solid #b9cede;
     border-radius: 12px;
 }
 
 [data-testid="stExpander"] summary,
 [data-testid="stExpander"] summary p {
-    color: #172033 !important;
+    color: #172b43 !important;
 }
 
 button[data-baseweb="tab"] {
-    color: #52647c !important;
+    color: #4f647b !important;
 }
 
 button[data-baseweb="tab"][aria-selected="true"] {
@@ -320,23 +385,65 @@ button[data-baseweb="tab"][aria-selected="true"] {
 }
 
 hr {
-    border-color: #d4deea !important;
+    border-color: #b8cbdc !important;
 }
 
 /* ============================================================
-   CUSTOM DARK STATUS / POLICY ELEMENTS
+   EXISTING CUSTOM DARK PANELS
+   Keep these intentionally darker, but readable.
    ============================================================ */
 
 .sentinel-dark-panel {
-    background: #16233a;
-    color: #f7faff;
-    border: 1px solid #2d4262;
+    background: #294766 !important;
+    color: #f7fbff !important;
+    border: 1px solid #456482;
     border-radius: 14px;
     padding: 1rem;
 }
 
 .sentinel-dark-panel * {
-    color: #f7faff !important;
+    color: #f7fbff !important;
+}
+
+/* Inline cards that may have inherited dark styling:
+   force their text to match their light surfaces. */
+div[style*="background:#edf5fa"] *,
+div[style*="background:linear-gradient(135deg,#edf5fa"] *,
+div[style*="background:linear-gradient(135deg,#f0edf4"] *,
+div[style*="background:linear-gradient(135deg,#e9f6ee"] * {
+    color: #172b43 !important;
+}
+
+/* Policy cards: black text */
+div[style*="background:#9BE7B1"] *,
+div[style*="background:#F7DF63"] *,
+div[style*="background:#E88B9B"] * {
+    color: #000000 !important;
+}
+
+/* ============================================================
+   DISTINCT CONTENT CARDS
+   Main background stays slate-blue; content blocks stay lighter.
+   ============================================================ */
+
+[data-testid="stVerticalBlockBorderWrapper"] {
+    border-color: #c0d0dc !important;
+}
+
+[data-testid="stHorizontalBlock"] {
+    gap: 1rem;
+}
+
+/* Keep common bordered containers visibly lighter than page */
+div[data-testid="stVerticalBlockBorderWrapper"] > div {
+    background: #ffffff;
+    border-radius: 14px;
+}
+
+/* Progress bars */
+div[data-testid="stProgress"] {
+    background: #e1eaf1 !important;
+    border-radius: 999px;
 }
 
 /* ============================================================
@@ -375,7 +482,6 @@ hr {
     h3 { font-size: 1.15rem !important; }
 }
 
-/* Streamlit chrome */
 #MainMenu {
     visibility: hidden;
 }
@@ -383,14 +489,6 @@ hr {
 footer {
     visibility: hidden;
 }
-
-/* Force policy cards to readable black text regardless of surrounding theme */
-div[style*="background:#9BE7B1"] *,
-div[style*="background:#F7DF63"] *,
-div[style*="background:#E88B9B"] * {
-    color: #000000 !important;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -1135,7 +1233,11 @@ def _get_sentinel_api_url():
 
     # Local development / other hosts: fall back to environment variable.
     configured = secret_url or os.getenv("SENTINEL_API_URL")
-    return (configured or "http://127.0.0.1:8000").rstrip("/")
+    if configured:
+        return str(configured).rstrip("/")
+    if os.name == "nt":
+        return "http://127.0.0.1:8000"
+    return "https://abuse-ring-sentinel-ie88.onrender.com"
 
 
 SENTINEL_API_URL = _get_sentinel_api_url()
@@ -1212,6 +1314,84 @@ def _ensure_sentinel_api():
         "in the project folder and reload the dashboard."
     )
 
+def _local_claim_fallback(user_id, referrer_id, bonus_amount, payment_id=""):
+    """Use the same deterministic claim engine when the API is unreachable."""
+    try:
+        from src.features.claim_features import ClaimFeatureBuilder
+        from src.pipeline.claim_risk import ClaimRiskScorer
+        builder = ClaimFeatureBuilder(
+            users_path=str(PROJECT_ROOT / "data" / "users.csv"),
+            referrals_path=str(PROJECT_ROOT / "data" / "referrals.csv"),
+        )
+        features = builder.build(
+            user_id=str(user_id),
+            referrer_id=str(referrer_id) if referrer_id else None,
+        )
+        result = ClaimRiskScorer().score(features)
+        if result.action == "APPROVE_BONUS":
+            decision, status, obs = "APPROVED", "RELEASED_SIMULATED", "NOT_REQUIRED"
+        elif result.action == "VERIFY_CLAIM":
+            decision, status, obs = "VERIFICATION_REQUIRED", "HELD", "PENDING"
+        else:
+            decision, status, obs = "REJECTED", "NOT_RELEASED", "NOT_REQUIRED"
+        now = datetime.utcnow().isoformat()
+        claim_id = f"claim_{user_id}_{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}"
+        record = {
+            "claim_id": claim_id, "user_id": str(user_id),
+            "referrer_id": str(result.referrer_id),
+            "bonus_amount": float(bonus_amount), "bonus_amount_inr": float(bonus_amount),
+            "payment_id": payment_id or None,
+            "risk_score": result.risk_score, "initial_risk_score": result.risk_score,
+            "risk_level": result.risk_level, "engine_action": result.action,
+            "action": result.action, "decision": decision, "final_decision": decision,
+            "bonus_status": status, "reasons": result.reasons,
+            "claim_time_features": features, "signals": features,
+            "observation_status": obs,
+            "observation_source": "not_started" if obs == "PENDING" else None,
+            "policy": {"low_action":"APPROVE_BONUS", "medium_action":"HOLD_AND_OBSERVE",
+                       "high_action":"REJECT_BONUS", "policy_version":"1.2-autonomous-observation"},
+            "dry_run": True, "money_moved": False, "timestamp": now, "created_at": now,
+        }
+        return record, None
+    except Exception as exc:
+        return None, f"Local claim engine failed: {type(exc).__name__}: {exc}"
+
+
+def _local_observation_fallback(claim):
+    """Use the project's real post-signup observation engine as a fallback."""
+    try:
+        from src.pipeline.claim_observation import ClaimObservationEngine
+        engine = ClaimObservationEngine(users_path=str(PROJECT_ROOT / "data" / "users.csv"))
+        observation = engine.observe(user_id=str(claim["user_id"]))
+        if observation.action == "APPROVE_BONUS":
+            decision, status = "APPROVED", "RELEASED_SIMULATED"
+        elif observation.action == "KEEP_HELD":
+            decision, status = "VERIFICATION_REQUIRED", "HELD"
+        else:
+            decision, status = "REJECTED", "NOT_RELEASED"
+        return {
+            "claim_id": claim.get("claim_id"), "user_id": claim.get("user_id"),
+            "referrer_id": claim.get("referrer_id", ""),
+            "bonus_amount": claim.get("bonus_amount", 0),
+            "bonus_amount_inr": claim.get("bonus_amount_inr", claim.get("bonus_amount", 0)),
+            "payment_id": claim.get("payment_id"),
+            "initial_decision": claim.get("decision"),
+            "initial_risk_score": claim.get("risk_score", 0),
+            "risk_score": claim.get("risk_score", 0), "risk_level": claim.get("risk_level", "MEDIUM"),
+            "observation_score": observation.observation_score,
+            "behavior_score": observation.observation_score,
+            "observation_action": observation.action,
+            "observation_evidence": observation.reasons,
+            "reasons": observation.reasons, "decision": decision, "final_decision": decision,
+            "bonus_status": status,
+            "observation_status": "STILL_HELD" if observation.action == "KEEP_HELD" else "RESOLVED",
+            "observation_source": "post_signup_behavior_replay",
+            "dry_run": True, "money_moved": False, "timestamp": datetime.utcnow().isoformat(),
+        }, None
+    except Exception as exc:
+        return None, f"Local observation engine failed: {type(exc).__name__}: {exc}"
+
+
 def submit_bonus_claim(user_id, referrer_id, bonus_amount, payment_id=""):
     """Call the real local FastAPI claim endpoint."""
     payload = {
@@ -1247,10 +1427,14 @@ def submit_bonus_claim(user_id, referrer_id, bonus_amount, payment_id=""):
             detail = str(exc)
         return None, f"API returned HTTP {exc.code}: {detail}"
     except Exception as exc:
+        fallback, fallback_error = _local_claim_fallback(
+            user_id, referrer_id, bonus_amount, payment_id
+        )
+        if fallback is not None:
+            return fallback, None
         return None, (
-            "Could not reach Sentinel API. Start FastAPI with "
-            "`python -m uvicorn src.api.main:app --reload --port 8000`. "
-            f"Details: {exc}"
+            "Could not reach Sentinel API and local fallback failed. "
+            f"API error: {exc}. Local error: {fallback_error}"
         )
 
 
@@ -1311,9 +1495,13 @@ def resolve_held_claim(claim_id):
         return None, f"Observation API returned HTTP {exc.code}: {detail}"
 
     except Exception as exc:
+        claim = st.session_state.get("last_claim_result")
+        if claim and str(claim.get("claim_id", "")) == str(claim_id):
+            fallback, fallback_error = _local_observation_fallback(claim)
+            if fallback is not None:
+                return fallback, None
         return None, (
-            "Could not reach Sentinel observation API. "
-            "Make sure FastAPI is running on port 8000. "
+            "Could not reach Sentinel observation API and local fallback failed. "
             f"Details: {exc}"
         )
 
@@ -1545,6 +1733,53 @@ audit = load_jsonl(AUDIT_PATH)
 referral_graph, graph_cluster_map = build_referral_graph(users)
 
 # ============================================================
+# MODEL EXPLAINABILITY
+# ============================================================
+
+def load_global_feature_importance():
+    try:
+        import joblib
+        paths=(PROJECT_ROOT/"reports"/"fraud_ring_model.joblib", PROJECT_ROOT/"src"/"reports"/"fraud_ring_model.joblib")
+        for path in paths:
+            if path.exists():
+                model=joblib.load(path)
+                vals=getattr(model,"feature_importances_",None)
+                if vals is None: return pd.DataFrame()
+                names=list(getattr(model,"feature_names_in_",[])) or [
+                    "cluster_size","n_referral_edges","referral_tree_depth","graph_density","fan_out_ratio",
+                    "signup_span_hours","signups_per_hour","n_unique_devices","n_unique_ips","n_unique_instruments",
+                    "device_reuse_ratio","ip_reuse_ratio","instrument_reuse_ratio","addr_concentration_ratio",
+                    "top_instrument_share","top_device_share","avg_txn_post_signup","avg_txn_value_post_signup",
+                    "avg_active_days_post_signup","pct_zero_engagement","total_bonus_claimed","avg_bonus_claimed"]
+                n=min(len(names),len(vals))
+                return pd.DataFrame({"Parameter":names[:n],"Global importance":[float(x)*100 for x in vals[:n]]}).sort_values("Global importance",ascending=False)
+    except Exception:
+        pass
+    return pd.DataFrame()
+
+
+def render_risk_reasoning(selected_row, risk_score, action):
+    st.markdown("### 🧠 How the AI formed this risk score")
+    st.caption("Gradient Boosting is an ensemble of decision trees, not a linear weighted formula. Global feature importance below shows which parameters mattered most during training; the second table shows this cluster's actual values.")
+    a,b,c,d=st.columns(4)
+    a.metric("Risk score",f"{float(risk_score):.4f}")
+    b.metric("Model","Gradient Boosting")
+    c.metric("Trees","200")
+    d.metric("Max depth","3")
+    left,right=st.columns(2)
+    with left:
+        st.markdown("#### Top model-important parameters")
+        imp=load_global_feature_importance()
+        if imp.empty: st.info("Model importance is unavailable.")
+        else: st.dataframe(imp.head(7),use_container_width=True,hide_index=True,column_config={"Global importance":st.column_config.NumberColumn(format="%.2f%%")})
+    with right:
+        st.markdown("#### Actual values for this cluster")
+        names=["cluster_size","n_referral_edges","referral_tree_depth","graph_density","fan_out_ratio","signup_span_hours","signups_per_hour","n_unique_devices","n_unique_ips","n_unique_instruments","device_reuse_ratio","ip_reuse_ratio","instrument_reuse_ratio","addr_concentration_ratio","top_instrument_share","top_device_share","avg_txn_post_signup","avg_txn_value_post_signup","avg_active_days_post_signup","pct_zero_engagement","total_bonus_claimed","avg_bonus_claimed"]
+        vals=[{"Parameter":n,"Observed value":selected_row[n]} for n in names if n in selected_row.index and pd.notna(selected_row[n])]
+        st.dataframe(pd.DataFrame(vals),use_container_width=True,hide_index=True)
+    st.info(f"Model score {float(risk_score):.4f} → {str(action).replace('_',' ')}. The autonomous payout policy then applies its thresholds.")
+
+# ============================================================
 # DERIVED VALUES (AVAILABLE TO EVERY WORKSPACE)
 # ============================================================
 default_metrics = metrics.get("metrics_at_default_threshold", {}) or {}
@@ -1647,7 +1882,25 @@ if active_section == "🏠 Overview":
     k1.metric("Users observed", f"{len(users):,}")
     k2.metric("Referral clusters", f"{len(features):,}")
     k3.metric("High-risk clusters", f"{blocked:,}")
-    k4.metric("Bonus exposure blocked", money(blocked_money))
+    _overview_total_exposure = (
+        float(features["total_bonus_claimed"].sum())
+        if not features.empty and "total_bonus_claimed" in features.columns
+        else 0.0
+    )
+    _overview_blocked_pct = (
+        blocked_money / _overview_total_exposure * 100.0
+        if _overview_total_exposure > 0 else 0.0
+    )
+    k4.metric(
+        "Bonus exposure blocked",
+        f"{_overview_blocked_pct:.1f}%",
+        delta=money(blocked_money),
+        delta_color="off",
+    )
+    st.caption(
+        f"₹{blocked_money:,.0f} protected out of "
+        f"₹{_overview_total_exposure:,.0f} total synthetic bonus exposure."
+    )
 
     st.markdown("### Autonomous decision flow")
     f1c, f2c, f3c, f4c = st.columns(4)
@@ -1742,7 +1995,7 @@ if active_section == "🏠 Overview":
 elif active_section == "⚡ Live Bonus Claim":
     st.markdown(
         """
-        <div style="background:linear-gradient(135deg,#eef7ff,#e6f2ff);border:1px solid #bfdbfe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+        <div style="background:linear-gradient(135deg,#edf5fa,#e6f2ff);border:1px solid #bfdbfe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
           <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">⚡ Live Bonus Claim</div>
           <div style="color:#475569;margin-top:4px;">Claim-level analysis • evaluate one referral-bonus claim using immediate evidence.</div>
         </div>
@@ -1858,7 +2111,7 @@ elif active_section == "⚡ Live Bonus Claim":
 elif active_section == "🔗 Cluster Analysis":
     st.markdown(
         """
-        <div style="background:linear-gradient(135deg,#f7f1ff,#f1e9ff);border:1px solid #d8b4fe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+        <div style="background:linear-gradient(135deg,#f0edf4,#f1e9ff);border:1px solid #d8b4fe;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
           <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">🔗 Fraud Cluster Analysis</div>
           <div style="color:#475569;margin-top:4px;">Cluster-level analysis • inspect connected accounts, model evidence, policy and AI explanation.</div>
         </div>
@@ -2173,6 +2426,64 @@ elif active_section == "🔗 Cluster Analysis":
 
             st.metric("BONUS AT STAKE", money(bonus_amount))
 
+            # ========================================================
+            # EXPLAINABLE RISK CALCULATION
+            # ========================================================
+            st.markdown("### 🧠 Why this risk score?")
+            st.caption(
+                "This is the actual model evidence behind the score — not a generic AI explanation."
+            )
+
+            _imp = load_global_feature_importance()
+            _top = _imp.head(5).copy() if not _imp.empty else pd.DataFrame()
+
+            r1, r2, r3 = st.columns(3)
+            with r1:
+                st.metric("Model", "Gradient Boosting")
+                st.caption("200 trees • depth 3 • learning rate 0.08")
+            with r2:
+                st.metric("Model score", f"{score:.4f}")
+                st.caption("Probability returned by the trained classifier")
+            with r3:
+                if score < 0.30:
+                    _band = "LOW"
+                elif score < 0.70:
+                    _band = "MEDIUM"
+                else:
+                    _band = "HIGH"
+                st.metric("Risk band", _band)
+                st.caption("Policy: <0.30 release • 0.30–0.69 verify • ≥0.70 block")
+
+            if not _top.empty:
+                _top["Importance"] = _top["Global importance"].map(lambda x: f"{x:.2f}%")
+                _reason_rows = []
+                for _, _imp_row in _top.iterrows():
+                    _name = _imp_row["Parameter"]
+                    _value = row.get(_name, "N/A")
+                    try:
+                        _value = f"{float(_value):.4f}"
+                    except Exception:
+                        _value = str(_value)
+                    _reason_rows.append({
+                        "Model-important parameter": _name,
+                        "Global importance": _imp_row["Importance"],
+                        "This cluster": _value,
+                    })
+                st.dataframe(
+                    pd.DataFrame(_reason_rows),
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+            st.info(
+                "Important: Gradient Boosting does not have a single fixed weight per parameter. "
+                "The percentages above are global feature importance across the trained tree ensemble; "
+                "the observed values are the real inputs for this cluster."
+            )
+
+            # Existing detailed explanation panel.
+            render_risk_reasoning(row, score, initial_action)
+
             # Verification evidence
             if checks:
                 st.markdown("### 🤖 Automated Verification Evidence")
@@ -2293,7 +2604,7 @@ elif active_section == "🔗 Cluster Analysis":
 elif active_section == "🗃️ Data & Referral Graph":
     st.markdown(
         """
-        <div style="background:linear-gradient(135deg,#f1fbf6,#eaf8f1);border:1px solid #bbf7d0;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
+        <div style="background:linear-gradient(135deg,#e9f6ee,#eaf8f1);border:1px solid #bbf7d0;border-radius:18px;padding:18px 20px;margin:4px 0 18px 0;">
           <div style="font-size:1.55rem;font-weight:800;color:#0f172a;">🗃️ Data & Referral Graph</div>
           <div style="color:#475569;margin-top:4px;">Evidence workspace • inspect datasets, Razorpay test events and the referral network.</div>
         </div>
@@ -2470,7 +2781,17 @@ elif active_section == "🗃️ Data & Referral Graph":
             )
 
             st.markdown("#### 🔍 Zoom into one cluster")
-            cluster_options = sorted(users["cluster_id"].astype(str).unique().tolist()) if "cluster_id" in users.columns else []
+            cluster_options = (
+    sorted(
+        users["cluster_id"]
+        .dropna()
+        .astype(str)
+        .unique()
+        .tolist()
+    )
+    if "cluster_id" in users.columns
+    else []
+)
             if cluster_options:
                 graph_choice = st.selectbox(
                     "Choose a cluster",
@@ -2684,33 +3005,66 @@ elif active_section == "📜 Audit Trail":
 
         audit_rows = []
 
+        _audit_imp = load_global_feature_importance()
+        _audit_top = (
+            _audit_imp.head(3)["Parameter"].tolist()
+            if not _audit_imp.empty else []
+        )
+
         for record in audit[-15:]:
+            _cid = str(record.get("cluster_id", ""))
+            _risk_raw = record.get("risk_score", "")
+            try:
+                _risk = float(_risk_raw)
+                _risk_text = f"{_risk:.4f}"
+            except Exception:
+                _risk = None
+                _risk_text = str(_risk_raw)
+
+            # Pull the actual feature values for the audited cluster.
+            _cluster_row = pd.DataFrame()
+            if not features.empty and "cluster_id" in features.columns:
+                _cluster_row = features[
+                    features["cluster_id"].astype(str) == _cid
+                ]
+
+            _factor_parts = []
+            if not _cluster_row.empty:
+                _rr = _cluster_row.iloc[0]
+                for _name in _audit_top:
+                    if _name in _rr.index:
+                        try:
+                            _factor_parts.append(
+                                f"{_name}={float(_rr[_name]):.3f}"
+                            )
+                        except Exception:
+                            _factor_parts.append(f"{_name}={_rr[_name]}")
+
+            if _risk is not None:
+                if _risk < 0.30:
+                    _band = "LOW (<0.30)"
+                elif _risk < 0.70:
+                    _band = "MEDIUM (0.30–0.69)"
+                else:
+                    _band = "HIGH (≥0.70)"
+                _reason = (
+                    f"{_band}; top model signals: "
+                    + (", ".join(_factor_parts) if _factor_parts else "feature data unavailable")
+                )
+            else:
+                _reason = "Risk score unavailable; see source audit record."
 
             audit_rows.append(
                 {
-                    "Timestamp": record.get(
-                        "timestamp",
-                        "",
-                    ),
-                    "Cluster": record.get(
-                        "cluster_id",
-                        "",
-                    ),
+                    "Timestamp": record.get("timestamp", ""),
+                    "Cluster": _cid,
                     "Action": record.get(
                         "action",
-                        record.get(
-                            "decision",
-                            "",
-                        ),
+                        record.get("decision", ""),
                     ),
-                    "Risk": record.get(
-                        "risk_score",
-                        "",
-                    ),
-                    "Policy": record.get(
-                        "policy_version",
-                        "1.1-autonomous",
-                    ),
+                    "Risk": _risk_text,
+                    "Why / key evidence": _reason,
+                    "Policy": record.get("policy_version", "1.1-autonomous"),
                 }
             )
 
@@ -2737,6 +3091,37 @@ elif active_section == "💰 Bonus Protection":
     # ============================================================
 
     st.header("💰 Bonus Protection")
+
+    _total_bonus_exposure = (
+        float(features["total_bonus_claimed"].sum())
+        if not features.empty and "total_bonus_claimed" in features.columns
+        else 0.0
+    )
+    _blocked_exposure_pct = (
+        blocked_money / _total_bonus_exposure * 100.0
+        if _total_bonus_exposure > 0 else 0.0
+    )
+
+    # Percentage is deliberately the headline metric for the pitch.
+    bp1, bp2, bp3 = st.columns(3)
+    with bp1:
+        st.metric("BONUS EXPOSURE BLOCKED", money(blocked_money))
+    with bp2:
+        st.metric("EXPOSURE PROTECTED", f"{_blocked_exposure_pct:.1f}%")
+    with bp3:
+        st.metric("TOTAL BONUS EXPOSURE", money(_total_bonus_exposure))
+
+    st.caption(
+        "The percentage is blocked referral-bonus exposure ÷ total synthetic referral-bonus exposure."
+    )
+
+    _illustrative_1cr = 10_000_000 * _blocked_exposure_pct / 100.0
+    st.info(
+        f"Illustrative scale: if a merchant spent ₹1 crore on referral bonuses, "
+        f"the same {_blocked_exposure_pct:.1f}% protection rate would correspond to "
+        f"about ₹{_illustrative_1cr:,.0f} of exposure protected. "
+        "This is a scenario estimate, not a claim about any real company's spend."
+    )
 
     b1, b2 = st.columns(2)
 
